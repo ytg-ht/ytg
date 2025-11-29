@@ -1,200 +1,168 @@
-// stories.js — curated short/medium/long non-cringe stories
+// stories.js — curated non-cringe stories (short/medium/long)
+// Each entry: { genre, length: 'short'|'medium'|'long', lines: [..] }
+// You can add more entries later.
+
 const STORY_PACK = [
-  /* Petty Revenge */
+  /* Petty / Relatable */
   { genre:"Petty Revenge", length:"short", lines:[
-    "She said I talk too much. So I whispered louder. Instant silence."
-  ]},
-  { genre:"Petty Revenge", length:"short", lines:[
-    "Someone took my charger. I notified them when their battery hit 1%."
+    "He said I talk too much. So I whispered louder and got the whole table to be quiet."
   ]},
   { genre:"Petty Revenge", length:"medium", lines:[
-    "Kid called me 'extra' in class. Next week I brought snacks for everyone.",
-    "He didn't get any. Karma looked delicious."
+    "Someone took my charger. So I walked up to them later and asked for the Wi-Fi password with a smile.",
+    "They look up when the battery hits 3%. Timing matters."
   ]},
   { genre:"Petty Revenge", length:"long", lines:[
-    "My brother used my stuff without asking for months.",
-    "I replaced his ringtone with dramatic classical music.",
-    "Now every sneak move arrives with violins. Justice served."
+    "My sibling kept using my headphones. I labeled their playlist 'boring' and changed the album art to 'Please return'.",
+    "They begged me to fix it and offered snacks. The snacks were the plan."
   ]},
 
   /* School Chaos */
   { genre:"School Chaos", length:"short", lines:[
-    "Fire drill during a quiz — we all got passes. Best plot twist."
+    "Fire drill during math test. Everyone left math on the desk like a crime scene."
   ]},
   { genre:"School Chaos", length:"medium", lines:[
-    "Teacher said 'lining up quietly' and someone started a whisper chant.",
-    "It became a club. We wore badges."
+    "Substitute said 'be yourselves' and then assigned a pop quiz.",
+    "Two minutes later we were all 'our worst selves'."
   ]},
   { genre:"School Chaos", length:"long", lines:[
-    "They rearranged the lunch seating chart to stop cliques.",
-    "We staged a fake press conference about 'food equality'.",
-    "They fixed the chart and we celebrated with cookies."
+    "They tried to stop clique lunch tables by reshuffling menus.",
+    "We staged a silent protest eating apples and nodding seriously.",
+    "Administration forgot how to handle passive-aggression."
   ]},
 
   /* Crush Awkward */
   { genre:"Crush Awkward", length:"short", lines:[
-    "I complimented their hoodie. They thought I was flirting with the hoodie."
+    "Crush asked if I liked their haircut. I said yes and then complimented the sky."
   ]},
   { genre:"Crush Awkward", length:"medium", lines:[
-    "Crush asked if I liked mystery novels. I said yes.",
-    "Turns out their ex wrote one. Awkward silence."
+    "I wrote a note for my crush and left it on a desk. They read it aloud... and asked who 'the memo' was from.",
+    "I said 'the universe' and left."
   ]},
   { genre:"Crush Awkward", length:"long", lines:[
-    "I tried to act mysterious around my crush and tripped over a potted plant.",
-    "They checked if I was okay. I said I was 'collecting dramatic energy.'",
-    "They smiled. That's a win."
+    "Tried to be mysterious around crush; tripped over a plant and knocked a poster down.",
+    "They laughed and said 'you do you.' Somehow that was better than any speech."
   ]},
 
   /* Introvert Pain */
   { genre:"Introvert Pain", length:"short", lines:[
-    "Teacher: 'Share something about yourself.' Me: 'I share things offline.'"
+    "They asked 'what are you thinking?' I said 'quiet things' and left it at that."
   ]},
   { genre:"Introvert Pain", length:"medium", lines:[
-    "Group activity time. I sit in the corner and power-save my personality.",
-    "They think I'm aloof. I'm conserving bandwidth."
+    "Group work: I offered to 'format' the slides and then disappeared until they thanked me.",
+    "Ghosting with purpose."
   ]},
   { genre:"Introvert Pain", length:"long", lines:[
-    "Party invite: 'Everyone's coming.' I RSVP 'maybe' and call it a plan.",
-    "I show up for 10 minutes and leave. Peak performance."
+    "Party invite: 'be there or be square.' I RSVP 'maybe' and then show up for 12 minutes.",
+    "That’s my peak social performance."
   ]},
 
-  /* Sibling War */
+  /* Sibling / Family */
   { genre:"Sibling War", length:"short", lines:[
-    "Brother ate my leftovers. I set his alarm seven minutes earlier. Revenge is punctual."
+    "Sibling ate my leftovers. I poured glitter into their pencil case. Harmless, iconic."
   ]},
   { genre:"Sibling War", length:"medium", lines:[
-    "Little sibling hid my homework. I drew a treasure map and watched them search.",
-    "Still have the map."
+    "Little brother hid my homework. I left a fake map and watched him search for hours.",
+    "He found the map, not the homework. I still have the map."
   ]},
   { genre:"Sibling War", length:"long", lines:[
-    "Sibling wore my hoodie. I posted the photo to family chat with the caption 'found in the wild.'",
-    "Relatives sent rescue missions. Chaos."
+    "My sister borrowed my jacket and returned it with a sticker on the sleeve.",
+    "I posted the picture 'found: stolen goods'. Family group chat erupted in investigations."
   ]},
 
   /* Low-Effort Genius */
   { genre:"Low-Effort Genius", length:"short", lines:[
-    "Group project: I formatted the slides and got the credit. Efficiency."
+    "I did the title slide. They called me the project lead. Small wins."
   ]},
   { genre:"Low-Effort Genius", length:"medium", lines:[
-    "I said I'd make the slides. Used a template and one sentence.",
-    "Teacher called it 'clean design.' They don't know the truth."
+    "Task: 'design the presentation'. I used a template and minimal words.",
+    "Teacher complimented the 'clean aesthetic' and I bowed to the template gods."
   ]},
   { genre:"Low-Effort Genius", length:"long", lines:[
-    "Exam day: I show up with one formula sheet I 'might' need.",
-    "It was exactly what the test asked. Future me: you're welcome."
+    "Exam day: I prepared a one-page cheat sheet. It matched the final.",
+    "That single sheet is now in my personal hall of fame."
   ]},
 
-  /* Teacher Behavior */
+  /* Teacher stuff */
   { genre:"Teacher Behavior", length:"short", lines:[
-    "Teacher: 'I won't be late.' Arrived 22 minutes late. Role reversal."
+    "Teacher said 'no phones' but checked their phone for 12 minutes. I took notes."
   ]},
   { genre:"Teacher Behavior", length:"medium", lines:[
-    "Substitute introduced themselves like a villain origin story.",
-    "We behaved purely out of curiosity. It was chaos and we loved it."
+    "Sub told a story about being a spy. We took notes like it was a lecture.",
+    "Nobody questioned it."
   ]},
   { genre:"Teacher Behavior", length:"long", lines:[
-    "Teacher announced a pop quiz; one student actually studied.",
-    "We all looked at them like a rare artifact. They deserved the medal."
+    "Teacher: 'You’ll use this in life.' Ten years later: 'maybe.'",
+    "Reality didn't RSVP to class."
   ]},
 
   /* Lunchroom Logic */
   { genre:"Lunchroom Logic", length:"short", lines:[
-    "Cafeteria special: 'mystery meat'. I call that an identity."
+    "Cafeteria spaghetti redesigned my worldview. I accept defeat."
   ]},
   { genre:"Lunchroom Logic", length:"medium", lines:[
-    "No dessert on my tray. I traded social credit for cookies and left victorious."
+    "Dessert line looked empty so I ran. Glory is sweet but crumbly."
   ]},
   { genre:"Lunchroom Logic", length:"long", lines:[
-    "The lunch lady whispered about a 'secret menu'. We queued like cult members.",
-    "It was apples with sprinkles. Still worth it."
-  ]},
-
-  /* Social Flex */
-  { genre:"Social Flex", length:"short", lines:[
-    "Pretended my phone died to avoid a meeting. Power move."
-  ]},
-  { genre:"Social Flex", length:"medium", lines:[
-    "Someone asked me for advice. I gave a two-step plan and watched them become the hero.",
-    "I accepted a small compliment as fee."
-  ]},
-  { genre:"Social Flex", length:"long", lines:[
-    "Gossip circle started; I fed tiny truths and watched the dominoes fall.",
-    "No drama started. Controlled chaos is my art."
-  ]},
-
-  /* Darkish Irony */
-  { genre:"Darkish Irony", length:"short", lines:[
-    "Teacher: 'This will be useful later.' Ten years later: 'Nope.'"
-  ]},
-  { genre:"Darkish Irony", length:"medium", lines:[
-    "We made a safety plan for a play and forgot the script.",
-    "Improv saved it and the principal cried. Theater is wild."
-  ]},
-  { genre:"Darkish Irony", length:"long", lines:[
-    "Someone said they'd 'never' change. Then changed everything overnight.",
-    "We celebrated by making a rumor about their transformation. Meta."
+    "They introduced a 'mystery dessert'. We formed an investigation committee.",
+    "Turns out it was just very confident applesauce."
   ]},
 
   /* Absurd Random */
   { genre:"Absurd Random", length:"short", lines:[
-    "Elevator music started and someone slowed down dramatically. 10/10 performance."
+    "Someone did a dramatic slow clap in the hall and I applauded the energy."
   ]},
   { genre:"Absurd Random", length:"medium", lines:[
-    "I labeled my notebook 'do not open' and watched temptation failers.",
-    "I called it behavioral science."
+    "I labeled my notebook 'top secret'. People touched it exactly once.",
+    "Research complete."
   ]},
   { genre:"Absurd Random", length:"long", lines:[
-    "I started a club for people who don't want to be in clubs.",
-    "We met, apologized, and never met again."
+    "We started a club for people who refuse to join clubs.",
+    "We met once, held a solemn nap, and disbanded with dignity."
   ]},
 
   /* Academic Pain */
   { genre:"Academic Pain", length:"short", lines:[
-    "Midterm asked 'Explain yourself.' Me: 'I regret a few choices.'"
+    "Professor asked 'who read the assignment?' I raised my hand and lied."
   ]},
   { genre:"Academic Pain", length:"medium", lines:[
-    "Paper due midnight. I submitted one paragraph of honesty at 11:59.",
-    "Got a 'see me'. It's fine."
+    "Midterm: 'Write something.' I wrote the truth and got a 'see me'. Worth it."
   ]},
   { genre:"Academic Pain", length:"long", lines:[
-    "Group project turned into a soap opera.",
-    "We fixed slides and extinguished drama with graphs. Numbers don't lie."
+    "Group project devolved into drama but the final slides were immaculate.",
+    "Turns out spreadsheets are the therapy none of us knew we needed."
   ]},
 
   /* Hallway Humor */
   { genre:"Hallway Humor", length:"short", lines:[
-    "Someone ran like they were late for their destiny. They were not."
+    "Someone ran like it was the Olympics. Nobody qualified."
   ]},
   { genre:"Hallway Humor", length:"medium", lines:[
-    "Locker jammed; we staged a rescue mission.",
-    "Two students and a pencil saved the day."
+    "Locker jammed; we formed a rescue team with duct tape and optimism.",
+    "It worked. Confidence rising."
   ]},
   { genre:"Hallway Humor", length:"long", lines:[
-    "Senior pranked the PA system; we turned announcements into meme hour.",
-    "Principals smiled secretly. Organized chaos."
+    "Senior prank hijacked announcements with meme songs. The principal hummed along privately.",
+    "History will remember that playlist."
   ]},
 
-  /* Cringe-free Roast */
+  /* Roast (clean) */
   { genre:"Cringe-free Roast", length:"short", lines:[
-    "You looked at my notes — thanks for the free tutoring notes."
+    "You copied my notes — thanks for outsourcing your studying."
   ]},
   { genre:"Cringe-free Roast", length:"medium", lines:[
-    "They copied my homework and asked me to explain it to the teacher.",
-    "Confidence is impressive."
+    "They copied my answers and then asked for my explanation to the teacher.",
+    "That’s bravery I won't forget."
   ]},
   { genre:"Cringe-free Roast", length:"long", lines:[
-    "Someone tried to roast me and forgot the punchline.",
-    "I clapped. We both learned humility."
+    "Someone tried to roast me and forgot the joke halfway through.",
+    "We both clapped anyway. Honesty deserves applause."
   ]},
 
-  /* Add more later as you like */
+  // You can append more stories here.
 ];
 
-// helpers
 function categories(){
-  const s = new Set();
-  STORY_PACK.forEach(x=>s.add(x.genre));
-  return Array.from(s);
+  const s = new Set(); STORY_PACK.forEach(x=>s.add(x.genre)); return Array.from(s);
 }
 function getRandomStory(cat='any', len='any'){
   let pool = STORY_PACK.slice();
