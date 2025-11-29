@@ -1,352 +1,706 @@
-/* script.js — full working BrainRotter app (light UI) */
+/* script.js — rebuilt BrainRotter app
+   - big center video preview (canvas)
+   - right-side controls (story, caption timing, voice, export)
+   - captions appear N words at a time with pop-in animation
+   - ElevenLabs optional integration (user provides API key)
+   - local assets support (assets/videos/*.mp4) + procedural demos
+   - export .webm and optional MP4 conversion (ffmpeg.wasm)
+*/
 
-// ---- DOM ----
+// ---------- DOM ----------
+const sourceVideo = document.getElementById('sourceVideo');
 const canvas = document.getElementById('renderCanvas');
 const ctx = canvas.getContext('2d', { alpha: false });
 
-const layoutSelect = document.getElementById('layoutSelect');
-const videoUpload = document.getElementById('videoUpload');
-const demoClipSelect = document.getElementById('demoClipSelect');
-const randomizeBtn = document.getElementById('randomizeBtn');
+const revealImg = document.getElementById('revealImg');
 
-const divider = document.getElementById('divider');
+const demoClip = document.getElementById('demoClip');
+const localClip = document.getElementById('localClip');
+const videoUpload = document.getElementById('videoUpload');
+const randomAll = document.getElementById('randomAll');
+
+const genreSelect = document.getElementById('genreSelect');
+const lengthSelect = document.getElementById('lengthSelect');
 const storyPrompt = document.getElementById('storyPrompt');
 const fontSelect = document.getElementById('fontSelect');
-const fontColor = document.getElementById('fontColor');
-const animSelect = document.getElementById('animSelect');
 const fontSize = document.getElementById('fontSize');
-const emojiInput = document.getElementById('emojiInput');
+const fontColor = document.getElementById('fontColor');
 
-const categoryFilter = document.getElementById('categoryFilter');
-const lengthFilter = document.getElementById('lengthFilter');
+const wordsPerChunk = document.getElementById('wordsPerChunk');
+const chunkSpeed = document.getElementById('chunkSpeed');
+const captionAnim = document.getElementById('captionAnim');
 
 const newStoryBtn = document.getElementById('newStoryBtn');
 const regenBtn = document.getElementById('regenBtn');
-const ttsBtn = document.getElementById('ttsBtn');
+const previewCaptions = document.getElementById('previewCaptions');
 
-const revealImg = document.getElementById('revealImg');
+const voiceProvider = document.getElementById('voiceProvider');
+const elevenForm = document.getElementById('elevenForm');
+const elevenKey = document.getElementById('elevenKey');
+const elevenVoice = document.getElementById('elevenVoice');
+const fetchElevenPreview = document.getElementById('fetchElevenPreview');
+
+const previewVoiceBtn = document.getElementById('previewVoice');
+const playbackRate = document.getElementById('playbackRate');
+const embedTTS = document.getElementById('embedTTS');
 
 const audioUpload = document.getElementById('audioUpload');
-const recordBtn = document.getElementById('recordBtn');
-const stopRecBtn = document.getElementById('stopRecBtn');
+const recordVoice = document.getElementById('recordVoice');
+const stopRecord = document.getElementById('stopRecord');
 
+const watermarkToggle = document.getElementById('watermarkToggle');
+const mp4Toggle = document.getElementById('mp4Toggle');
 const exportBtn = document.getElementById('exportBtn');
-const useMp4 = document.getElementById('useMp4');
-
-const voiceSelect = document.getElementById('voiceSelect');
-const playbackRate = document.getElementById('playbackRate');
-
-const toggleWatermark = document.getElementById('toggleWatermark');
-const toggleRevealAudio = document.getElementById('toggleRevealAudio');
-const randomClipsAllowed = document.getElementById('randomClipsAllowed');
-
-const fxGlitch = document.getElementById('fxGlitch');
-const fxZoom = document.getElementById('fxZoom');
-const fxBass = document.getElementById('fxBass');
 
 const helpBtn = document.getElementById('helpBtn');
+const themeSelect = document.getElementById('themeSelect');
 
-// ---- state ----
-let topVideo = null, topVideoURL = null;
+// ---------- state ----------
+let topVideoElement = null;
+let topVideoBlobURL = null;
+let proceduralMode = true;
 let dividerPct = 0.58;
-let currentStoryObj = null;
+let currentStory = null;
 let audioCtx = null;
 let recordedAudioBuffer = null;
-let micRecorder = null, micStream = null;
+let mediaRecorder = null;
+let micStream = null;
 let revealNodes = null;
+let ffmpegLoaded = false;
+let ttsAudioBuffer = null; // buffer fetched from ElevenLabs if used
 
-// small helpers
-const choose = arr => arr[Math.floor(Math.random()*arr.length)];
-const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+// ---------- helpers ----------
+const choose = a => a[Math.floor(Math.random()*a.length)];
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
 
-// ---- populate categories ----
-(function populateCategories(){
-  const cats = window.BR_STORIES.categories();
-  categoryFilter.innerHTML = '<option value="any">Any genre</option>';
-  cats.forEach(c => { const opt = document.createElement('option'); opt.value=c; opt.textContent=c; categoryFilter.appendChild(opt); });
+// ---------- local video library (names you should add into assets/videos/) ----------
+// Put your real slime videos in /assets/videos/ and they will appear in the "Local clip" select.
+// Example filenames to add: assets/videos/slime1.mp4, assets/videos/slime2.mp4, assets/videos/soap1.mp4
+const LOCAL_LIBRARY = [
+  { id: 'slime1', title: 'Slime 1', src: 'assets/videos/slime1.mp4' },
+  { id: 'slime2', title: 'Slime 2', src: 'assets/videos/slime2.mp4' },
+  { id: 'soap1', title: 'Soap Cut', src: 'assets/videos/soap1.mp4' },
+  { id: 'sand1', title: 'Kinetic Sand', src: 'assets/videos/sand1.mp4' }
+];
+
+// populate local clip select
+(function populateLocal(){
+  localClip.innerHTML = '<option value="">— local asset —</option>';
+  LOCAL_LIBRARY.forEach(it => {
+    const o=document.createElement('option'); o.value=it.src; o.textContent=it.title; localClip.appendChild(o);
+  });
 })();
-(function populateLengths(){
-  lengthFilter.value = 'any';
-})();
 
-// ---- voices ----
-function updateVoices(){
-  const vs = window.speechSynthesis.getVoices();
-  voiceSelect.innerHTML = '';
-  vs.forEach((v,i)=> { const o=document.createElement('option'); o.value=i; o.textContent=`${v.name} — ${v.lang}`; voiceSelect.appendChild(o); });
-  if(vs.length===0){ const o=document.createElement('option'); o.textContent='Default browser voice'; voiceSelect.appendChild(o); }
-}
-window.speechSynthesis.onvoiceschanged = updateVoices;
-updateVoices();
-
-// ---- demo loops (procedural) ----
-function makeDemoLoop(type='slime'){
-  const c = document.createElement('canvas'); c.width=720; c.height=1280;
-  const g = c.getContext('2d'); let t=0;
+// ---------- procedural demo loops (fallback) ----------
+function makeProcedural(type='slime_proc'){
+  const off = document.createElement('canvas');
+  off.width = 720; off.height = 1280;
+  const g = off.getContext('2d'); let t=0;
   function frame(){
-    g.fillStyle = type==='slime' ? '#07121a' : '#071018';
-    g.fillRect(0,0,c.width,c.height);
-    for(let i=0;i<12;i++){
-      const x = (i*140 + t*6) % (c.width+200) - 100;
-      const r = 40 + Math.sin((t+i)/6)*14;
-      g.beginPath(); g.fillStyle = `hsla(${(i*30+t*3)%360},80%,60%,0.85)`; g.arc(x,c.height/2 + Math.sin(i+t/9)*40,Math.abs(r),0,Math.PI*2); g.fill();
+    g.fillStyle = (type==='slime_proc') ? '#05121a' : '#081018';
+    g.fillRect(0,0,off.width,off.height);
+    for(let i=0;i<14;i++){
+      const x = (i*160 + t*6) % (off.width+240) - 120;
+      const r = 40 + Math.sin((t+i)/7)*18;
+      g.beginPath();
+      g.fillStyle = `hsla(${(i*30+t*3)%360},80%,60%,0.85)`;
+      g.arc(x, off.height/2 + Math.sin(i + t/10)*46, Math.abs(r), 0, Math.PI*2);
+      g.fill();
     }
     t++;
     requestAnimationFrame(frame);
   }
   frame();
-  const stream = c.captureStream(30);
+
+  // make a short video blob via captureStream + MediaRecorder
+  const stream = off.captureStream(30);
   const mr = new MediaRecorder(stream);
-  let chunks=[];
-  mr.ondataavailable = e => chunks.push(e.data);
+  let chunks = [];
+  mr.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
   mr.onstop = () => {
-    const blob = new Blob(chunks,{type:'video/webm'}); const url = URL.createObjectURL(blob);
-    const v = document.createElement('video'); v.src=url; v.loop=true; v.muted=true; v.autoplay=true; v.playsInline=true; v.play().catch(()=>{});
-    topVideo = v; topVideoURL = url; chunks=[];
+    const blob = new Blob(chunks, { type: 'video/webm' });
+    if(topVideoBlobURL) URL.revokeObjectURL(topVideoBlobURL);
+    topVideoBlobURL = URL.createObjectURL(blob);
+    sourceVideo.src = topVideoBlobURL;
+    sourceVideo.loop = true; sourceVideo.muted = true; sourceVideo.play().catch(()=>{});
+    topVideoElement = sourceVideo;
+    proceduralMode = true;
   };
   mr.start();
-  setTimeout(()=> mr.stop(), 1200);
+  setTimeout(()=> mr.stop(), 1300);
 }
-makeDemoLoop('slime');
 
-// ---- uploads ----
+// start default procedural slime
+makeProcedural('slime_proc');
+
+// ---------- UI wiring: demo/local/upload selection ----------
+demoClip.addEventListener('change', e=>{
+  if(!demoClip.value) return;
+  makeProcedural(demoClip.value);
+});
+
+localClip.addEventListener('change', e=>{
+  const v = localClip.value;
+  if(!v) return;
+  proceduralMode = false;
+  if(topVideoBlobURL) { try { URL.revokeObjectURL(topVideoBlobURL); } catch(_){} }
+  sourceVideo.src = v;
+  sourceVideo.loop = true; sourceVideo.muted = true;
+  sourceVideo.play().catch(()=>{});
+  topVideoElement = sourceVideo;
+});
+
 videoUpload.addEventListener('change', e=>{
   const f = e.target.files[0];
   if(!f) return;
-  if(topVideoURL) URL.revokeObjectURL(topVideoURL);
-  topVideoURL = URL.createObjectURL(f);
-  const v = document.createElement('video'); v.src = topVideoURL; v.loop=true; v.muted=true; v.autoplay=true; v.playsInline=true;
-  v.play().catch(()=>{});
-  topVideo = v;
-});
-demoClipSelect.addEventListener('change', e=>{
-  if(demoClipSelect.value === 'slime') makeDemoLoop('slime');
-  if(demoClipSelect.value === 'cut') makeDemoLoop('cut');
+  proceduralMode = false;
+  if(topVideoBlobURL) try{ URL.revokeObjectURL(topVideoBlobURL) } catch(_) {}
+  topVideoBlobURL = URL.createObjectURL(f);
+  sourceVideo.src = topVideoBlobURL; sourceVideo.loop=true; sourceVideo.muted=true; sourceVideo.play().catch(()=>{});
+  topVideoElement = sourceVideo;
 });
 
-// ---- audio upload / record for embedding ----
-audioUpload.addEventListener('change', async e=>{
-  const f = e.target.files[0]; if(!f) return;
-  const ab = await f.arrayBuffer(); const ac = new (window.AudioContext||window.webkitAudioContext)();
-  recordedAudioBuffer = await ac.decodeAudioData(ab);
-  alert('Audio loaded — will be embedded on export.');
+randomAll.addEventListener('click', ()=> {
+  // random story + clip
+  const cats = window.BR_STORIES.categories();
+  genreSelect.value = choose(cats);
+  lengthSelect.value = choose(['short','medium','long']);
+  // pick a random local clip if available
+  const r = choose(LOCAL_LIBRARY);
+  if(r) localClip.value = r.src, localClip.dispatchEvent(new Event('change'));
+  generateStory(false);
 });
 
-recordBtn.addEventListener('click', async ()=>{
-  try { micStream = await navigator.mediaDevices.getUserMedia({ audio:true }); }
-  catch(e){ alert('Mic permission denied'); return; }
-  micRecorder = new MediaRecorder(micStream); let chunks=[];
-  micRecorder.ondataavailable = ev => { if(ev.data && ev.data.size) chunks.push(ev.data); };
-  micRecorder.onstop = async ()=> {
-    const blob = new Blob(chunks,{type:'audio/webm'}); const ab = await blob.arrayBuffer();
-    const ac = new (window.AudioContext||window.webkitAudioContext)();
-    recordedAudioBuffer = await ac.decodeAudioData(ab);
-    alert('Recording ready for export.');
-    micStream.getTracks().forEach(t=>t.stop()); micStream=null;
-  };
-  micRecorder.start(); recordBtn.disabled=true; stopRecBtn.disabled=false;
-});
-stopRecBtn.addEventListener('click', ()=> { if(micRecorder && micRecorder.state==='recording') micRecorder.stop(); recordBtn.disabled=false; stopRecBtn.disabled=true; });
+// ---------- story generation ----------
+function fillGenreOptions(){
+  const cats = window.BR_STORIES.categories();
+  genreSelect.innerHTML = '<option value="any">Any</option>';
+  cats.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; genreSelect.appendChild(o); });
+}
+fillGenreOptions();
 
-// ---- story generation ----
-function setStory(obj){
-  if(!obj) { storyPrompt.value = "No story"; return; }
-  storyPrompt.value = obj.lines.join("\n");
-  currentStoryObj = obj;
+function setStoryToPrompt(obj){
+  if(!obj){ storyPrompt.value = "No story." ; return; }
+  storyPrompt.value = obj.lines.join(' ');
+  currentStory = obj;
 }
 function generateStory(usePrompt=false){
-  const cat = categoryFilter.value || 'any';
-  const len = lengthFilter.value || 'any';
-  let s = window.BR_STORIES.getRandomStory(cat, len);
-  if(!s) s = window.BR_STORIES.getRandomStory('any','any');
-  setStory(s);
-  // reveal logic for certain genres: small chance
-  if(toggleRevealAudio && toggleRevealAudio.checked && Math.random() > 0.5){
+  const cat = genreSelect.value || 'any';
+  const len = lengthSelect.value || 'any';
+  let s = window.BR_STORIES.getRandomStory(cat, len) || window.BR_STORIES.getRandomStory('any','any');
+  if(!s) { storyPrompt.value = "No stories found"; return; }
+  setStoryToPrompt(s);
+  // small chance show reveal
+  if(Math.random() > 0.65){
     scheduleReveal();
-  } else {
-    revealImg.classList.remove('show');
   }
 }
 newStoryBtn.addEventListener('click', ()=> generateStory(false));
 regenBtn.addEventListener('click', ()=> generateStory(true));
-randomizeBtn.addEventListener('click', ()=>{
-  if(randomClipsAllowed.checked && Math.random()>0.3) makeDemoLoop(choose(['slime','cut']));
-  categoryFilter.value = choose(window.BR_STORIES.categories());
-  lengthFilter.value = choose(['short','medium','long']);
-  fontSelect.value = choose(['Inter','Impact','Arial','Georgia','Courier New']);
-  fontColor.value = choose(['#111827','#0b1220','#0a3b4d','#334155']);
-  animSelect.value = choose(['static','bounce','zoom','shake']);
-  fontSize.value = 56 + Math.floor(Math.random()*24);
-  emojiInput.value = choose(['💀','🔥','😂','😭','👀','😳']);
-  generateStory(false);
+
+// init
+generateStory(false);
+
+// ---------- caption chunking + display ----------
+// We'll create an overlay DOM element (not on canvas) rendered visually over the canvas for crisp pop-in.
+// Build a single floating container over the canvas to hold animated words.
+const captionContainer = document.createElement('div');
+captionContainer.style.position = 'absolute';
+captionContainer.style.left = '50%';
+captionContainer.style.transform = 'translateX(-50%)';
+captionContainer.style.pointerEvents = 'none';
+captionContainer.style.width = '86%';
+captionContainer.style.textAlign = 'center';
+captionContainer.style.bottom = '22%';
+captionContainer.style.zIndex = '40';
+captionContainer.style.fontWeight = '700';
+captionContainer.style.letterSpacing = '-0.5px';
+captionContainer.style.fontFamily = 'Inter, Arial, sans-serif';
+document.querySelector('.phone').appendChild(captionContainer);
+
+let captionTimer = null;
+function chunkText(text, n){
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if(words.length===0) return [];
+  const chunks = [];
+  for(let i=0;i<words.length;i+=n){
+    chunks.push(words.slice(i,i+n).join(' '));
+  }
+  return chunks;
+}
+
+function clearCaptionContainer(){
+  captionContainer.innerHTML = '';
+  captionContainer.style.opacity = '1';
+}
+
+function showChunks(text, wordsPer=3, msPerChunk=420, anim='pop'){
+  // clear any existing timer
+  if(captionTimer) { clearInterval(captionTimer); captionTimer = null; }
+  clearCaptionContainer();
+  const chunks = chunkText(text, wordsPer);
+  let i = 0;
+  const showNext = ()=>{
+    captionContainer.innerHTML = '';
+    if(i >= chunks.length) return;
+    const chunk = chunks[i];
+    // build span per word for pop-in effect
+    const span = document.createElement('div');
+    span.style.fontSize = (parseInt(fontSize.value,10) || 56) + 'px';
+    span.style.color = fontColor.value || '#111827';
+    span.style.display = 'inline-block';
+    span.style.lineHeight = '1.05';
+    // split words to individual spans
+    const words = chunk.split(' ');
+    words.forEach((w,j)=>{
+      const wspan = document.createElement('span');
+      wspan.className = 'caption-word';
+      wspan.textContent = w + (j === words.length-1 ? '' : ' ');
+      wspan.style.marginRight = '4px';
+      // slight stagger for each word
+      setTimeout(()=> {
+        wspan.classList.add('caption-pop');
+      }, 60*j);
+      span.appendChild(wspan);
+    });
+    captionContainer.appendChild(span);
+    i++;
+  };
+  // show first immediately
+  showNext();
+  captionTimer = setInterval(()=>{
+    if(i >= chunks.length){ clearInterval(captionTimer); captionTimer=null; return; }
+    showNext();
+  }, msPerChunk);
+}
+
+// preview captions button
+previewCaptions.addEventListener('click', ()=>{
+  const words = parseInt(wordsPerChunk.value,10);
+  const ms = parseInt(chunkSpeed.value,10);
+  const anim = captionAnim.value;
+  showChunks(storyPrompt.value || 'No story', words, ms, anim);
 });
 
-// ---- TTS preview ----
-function playTTS(text){
-  try {
+// ---------- voice playback ----------
+// Two modes:
+// - Browser TTS via SpeechSynthesis (fast preview, robotic sometimes but immediate)
+// - ElevenLabs fetch: downloads an audio file (higher quality). User must paste API key + voice id.
+// We will fetch audio into ttsAudioBuffer so it can be embedded in exported video if embedTTS.checked
+
+function ensureAudioCtx(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+
+// Browser TTS
+function playBrowserTTS(text, rate=1){
+  try{
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    const vs = window.speechSynthesis.getVoices();
-    if(vs.length && voiceSelect.value !== '') u.voice = vs[voiceSelect.value] || vs[0];
-    u.rate = parseFloat(playbackRate.value) || 1.0;
+    u.rate = rate;
     window.speechSynthesis.speak(u);
-  } catch(e){ console.warn('TTS error', e); }
+  }catch(e){
+    console.warn('Browser TTS error', e);
+  }
 }
-ttsBtn.addEventListener('click', ()=> playTTS(storyPrompt.value || ''));
 
-// ---- reveal images (embedded SVG data URIs) ----
-const MEMES = [
-  `data:image/svg+xml;utf8,
-  <svg xmlns='http://www.w3.org/2000/svg' width='1080' height='600'><rect width='100%' height='100%' fill='%23f6f8fb'/><text x='540' y='160' font-size='64' font-family='Impact,Arial' text-anchor='middle' fill='%230a1220'>BRAINROT REVEAL</text><text x='540' y='360' font-size='28' text-anchor='middle' fill='%237c3aed'>Wait for the punchline...</text></svg>`,
-  `data:image/svg+xml;utf8,
-  <svg xmlns='http://www.w3.org/2000/svg' width='1080' height='600'><rect width='100%' height='100%' fill='%23fff'/><text x='540' y='160' font-size='48' font-family='Arial' text-anchor='middle' fill='%230a1220'>WHAT THEY DIDN'T EXPECT</text><text x='540' y='360' font-size='24' text-anchor='middle' fill='%230a1220'>...then it got weird</text></svg>`
-];
+// ElevenLabs helper (optional) — NOTE: user must provide key and voice ID
+async function fetchElevenLabsTTS(text, apiKey, voiceId){
+  if(!apiKey || !voiceId) throw new Error('Missing ElevenLabs key/voice id');
+  // This call uses ElevenLabs v1 tts endpoint. The exact voice IDs vary — user must supply one.
+  const url = `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}`;
+  const body = text;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Accept': 'audio/mpeg',
+      'xi-api-key': apiKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ text: text, voice: voiceId })
+  });
+  if(!resp.ok) {
+    const txt = await resp.text();
+    throw new Error('TTS fetch failed: ' + resp.status + ' ' + txt);
+  }
+  // get arrayBuffer and decode
+  const ab = await resp.arrayBuffer();
+  const ac = ensureAudioCtx();
+  const buf = await ac.decodeAudioData(ab);
+  return buf;
+}
 
-// ---- reveal synth ----
-function ensureAudioCtx(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+document.getElementById('voiceProvider').addEventListener('change', e=>{
+  if(e.target.value === 'eleven') elevenForm.style.display = 'block'; else elevenForm.style.display = 'none';
+});
+
+// fetch ElevenLabs preview button
+if(fetchElevenPreview){
+  fetchElevenPreview.addEventListener('click', async ()=>{
+    const key = elevenKey.value.trim();
+    const vid = elevenVoice.value.trim();
+    const text = storyPrompt.value;
+    if(!key || !vid) { alert('Please paste your ElevenLabs key and voice id'); return; }
+    try{
+      fetchElevenPreview.disabled = true; fetchElevenPreview.textContent = 'Fetching...';
+      const buf = await fetchElevenLabsTTS(text, key, vid);
+      ttsAudioBuffer = buf; // store for embedding
+      // play buffer quickly
+      const ac = ensureAudioCtx();
+      const src = ac.createBufferSource(); src.buffer = buf; src.connect(ac.destination); src.start();
+      setTimeout(()=> { fetchElevenPreview.disabled = false; fetchElevenPreview.textContent = 'Fetch & Preview'; }, 800);
+    }catch(err){
+      alert('TTS fetch error: ' + err.message);
+      fetchElevenPreview.disabled = false; fetchElevenPreview.textContent = 'Fetch & Preview';
+    }
+  });
+}
+
+// preview voice sync button (attempt to sync voice with caption chunks)
+// Note: for browser TTS, we simply speak entire text while showing chunks — timing will match roughly
+previewVoiceBtn && previewVoiceBtn.addEventListener('click', async ()=>{
+  const words = parseInt(wordsPerChunk.value,10);
+  const ms = parseInt(chunkSpeed.value,10);
+  const text = storyPrompt.value || '';
+  // if ElevenLabs selected and ttsAudioBuffer exists and embedTTS checked, use buffer
+  if(voiceProvider.value === 'eleven' && ttsAudioBuffer){
+    // play buffer and start chunk display simultaneously
+    const ac = ensureAudioCtx();
+    const src = ac.createBufferSource(); src.buffer = ttsAudioBuffer; src.connect(ac.destination); src.start();
+    showChunks(text, words, ms, captionAnim.value);
+    return;
+  }
+  // else use browser TTS + show chunks
+  showChunks(text, words, ms, captionAnim.value);
+  playBrowserTTS(text, parseFloat(playbackRate.value));
+});
+
+// audio upload / record (for embedding)
+audioUpload.addEventListener('change', async e=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const ab = await f.arrayBuffer();
+  const ac = ensureAudioCtx();
+  recordedAudioBuffer = await ac.decodeAudioData(ab);
+  alert('Uploaded audio will be embedded into export.');
+});
+
+recordVoice.addEventListener('click', async ()=>{
+  try{
+    micStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+  } catch(e){
+    alert('Microphone permission denied.');
+    return;
+  }
+  let chunks = [];
+  mediaRecorder = new MediaRecorder(micStream);
+  mediaRecorder.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
+  mediaRecorder.onstop = async ()=>{
+    const blob = new Blob(chunks, { type: 'audio/webm' });
+    const ab = await blob.arrayBuffer();
+    const ac = ensureAudioCtx();
+    recordedAudioBuffer = await ac.decodeAudioData(ab);
+    alert('Recording ready for export.');
+    micStream.getTracks().forEach(t=>t.stop());
+    micStream = null;
+  };
+  mediaRecorder.start();
+  recordVoice.disabled = true; stopRecord.disabled = false;
+});
+stopRecord.addEventListener('click', ()=>{ if(mediaRecorder && mediaRecorder.state==='recording') mediaRecorder.stop(); recordVoice.disabled=false; stopRecord.disabled=true; });
+
+// ---------- reveal synth ----------
 function startRevealSynth(){
   const ac = ensureAudioCtx();
   stopRevealSynth();
   const dest = ac.createMediaStreamDestination();
-  const o1 = ac.createOscillator(); o1.type='sawtooth'; o1.frequency.value = 60 + Math.random()*30;
-  const g1 = ac.createGain(); g1.gain.value = 0.06;
-  o1.connect(g1).connect(dest); g1.connect(ac.destination);
-  const bufferSize = ac.sampleRate * 1.0; const buff = ac.createBuffer(1, bufferSize, ac.sampleRate);
-  const d = buff.getChannelData(0); for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1)*0.2;
-  const src = ac.createBufferSource(); src.buffer = buff; src.loop = true;
-  const bp = ac.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value = 1200; bp.Q.value = 1.2;
-  src.connect(bp).connect(dest); bp.connect(ac.destination);
-  const lfo = ac.createOscillator(); lfo.frequency.value = 0.25; const lg = ac.createGain(); lg.gain.value = 300;
-  lfo.connect(lg).connect(bp.frequency);
-  o1.start(); src.start(); lfo.start();
-  revealNodes = { o1, src, lfo, dest };
-  setTimeout(()=> stopRevealSynth(), 4200);
-  return dest;
-}
-function stopRevealSynth(){
-  if(!revealNodes) return;
-  try{ revealNodes.o1.stop(); }catch(e){} try{ revealNodes.src.stop(); }catch(e){} try{ revealNodes.lfo.stop(); }catch(e){}
-  revealNodes = null;
-}
+  const o = ac.createOscillator(); o.type='sawtooth'; o.frequency.value = 70 + Math.random()*40;
+  const g = ac.createGain(); g.gain.value = 0.06;
+  o.connect(g).connect(dest);
+  g.connect(ac.destination);
 
-// ---- reveal schedule ----
+  const buff = ac.createBuffer(1, ac.sampleRate * 1.0, ac.sampleRate); const d = buff.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1)*0.12;
+  const src = ac.createBufferSource(); src.buffer = buff; src.loop = true; src.connect(dest); src.connect(ac.destination);
+
+  const lfo = ac.createOscillator(); lfo.frequency.value = 0.25; const lg = ac.createGain(); lg.gain.value = 300;
+  lfo.connect(lg).connect(ac.createBiquadFilter().frequency);
+
+  o.start(); src.start(); lfo.start();
+  revealNodes = { o, src, lfo, dest };
+  setTimeout(()=> stopRevealSynth(), 4200);
+}
+function stopRevealSynth(){ if(!revealNodes) return; try{ revealNodes.o.stop(); }catch(e){} try{ revealNodes.src.stop(); }catch(e){} try{ revealNodes.lfo.stop(); }catch(e){} revealNodes=null; }
+
+// reveal scheduling
 function scheduleReveal(){
-  revealImg.src = choose(MEMES);
+  revealImg.src = choose([ // small built-in SVG reveals
+    `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1080' height='600'><rect width='100%' height='100%' fill='%23f6f8fb'/><text x='540' y='160' font-size='64' font-family='Impact,Arial' text-anchor='middle' fill='%230a1220'>REVEAL</text><text x='540' y='360' font-size='28' text-anchor='middle' fill='%237c3aed'>wait for it</text></svg>`,
+    `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1080' height='600'><rect width='100%' height='100%' fill='%23fff'/><text x='540' y='160' font-size='48' font-family='Arial' text-anchor='middle' fill='%230a1220'>WHAT HAPPENED</text><text x='540' y='360' font-size='24' text-anchor='middle' fill='%230a1220'>then it changed</text></svg>`
+  ]);
   revealImg.classList.add('show');
-  if(toggleRevealAudio.checked) startRevealSynth();
+  if(watermarkToggle.checked) startRevealSynth();
   setTimeout(()=> { revealImg.classList.remove('show'); stopRevealSynth(); }, 4200);
 }
 
-// ---- drawing ----
-function wrapText(ctx, text, maxWidth){
-  if(!text) return []; const words = text.split(' '); const lines = []; let cur = words[0]||'';
-  for(let i=1;i<words.length;i++){ const w=words[i]; if(ctx.measureText(cur+' '+w).width < maxWidth) cur += ' '+w; else { lines.push(cur); cur = w; } }
-  lines.push(cur); return lines.slice(0,10);
-}
-
+// ---------- drawing to canvas (video + background) ----------
 function drawLoop(){
+  // background
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
-  const topH = Math.floor(canvas.height * dividerPct); const bottomH = canvas.height - topH;
+  const topH = Math.floor(canvas.height * dividerPct);
+  const bottomH = canvas.height - topH;
 
-  // top area (video/demo)
-  if(topVideo && topVideo.readyState >= 2){
-    const vw = topVideo.videoWidth || topVideo.width, vh = topVideo.videoHeight || topVideo.height;
-    const scale = Math.max(canvas.width / vw, topH / vh); const sw = vw * scale, sh = vh * scale;
-    const sx = (canvas.width - sw)/2, sy = (topH - sh)/2; ctx.drawImage(topVideo, sx, sy, sw, sh);
+  // draw video area (top part)
+  if(topVideoElement && topVideoElement.readyState >= 2){
+    const vw = topVideoElement.videoWidth || topVideoElement.width;
+    const vh = topVideoElement.videoHeight || topVideoElement.height;
+    const scale = Math.max(canvas.width / vw, topH / vh);
+    const sw = vw * scale, sh = vh * scale;
+    const sx = (canvas.width - sw)/2, sy = (topH - sh)/2;
+    ctx.drawImage(topVideoElement, sx, sy, sw, sh);
   } else {
-    ctx.fillStyle = '#eef7ff'; ctx.fillRect(0,0,canvas.width,topH);
+    // procedural background
+    ctx.fillStyle = '#f0fbff'; ctx.fillRect(0,0,canvas.width,topH);
     const t = Date.now()/600;
-    for(let i=0;i<12;i++){ const x = (i*120 + t*60) % canvas.width; const r = 60 + Math.sin((t+i)/8)*10; ctx.beginPath(); ctx.fillStyle = `hsla(${(i*30+t)%360},70%,55%,0.06)`; ctx.arc(x, topH/2 + Math.sin(i + t/10)*40, r, 0, Math.PI*2); ctx.fill(); }
+    for(let i=0;i<12;i++){
+      const x = (i*120 + t*60) % canvas.width;
+      const r = 60 + Math.sin((t+i)/10)*12;
+      ctx.beginPath(); ctx.fillStyle = `hsla(${(i*30+t)%360},70%,55%,0.06)`; ctx.arc(x, topH/2 + Math.sin(i + t/8)*40, r, 0, Math.PI*2); ctx.fill();
+    }
   }
 
-  if(layoutSelect.value === 'split'){ ctx.fillStyle = '#ffffff'; ctx.fillRect(0, topH, canvas.width, bottomH); }
+  // bottom (if using split layout - we always use split look visually)
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, topH, canvas.width, bottomH);
 
-  // captions
-  const fsz = parseInt(fontSize.value,10) || 56; ctx.textAlign = 'center';
-  ctx.font = `700 ${fsz}px ${fontSelect.value || 'Inter'}`; ctx.fillStyle = fontColor.value || '#111827';
-  ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(2, fsz/12);
-
-  const text = storyPrompt.value.trim() || 'Press New Story';
-  const lines = wrapText(ctx, text, canvas.width - 160);
-  const anim = animSelect.value; const t = Date.now()/1000;
-  let baseY = layoutSelect.value === 'split' ? topH + 100 : canvas.height/2 - (lines.length * fsz)/2;
-
-  for(let i=0;i<lines.length;i++){
-    let dx = 0, dy = 0;
-    if(anim === 'bounce') dy = Math.sin(t*4 + i) * 8;
-    if(anim === 'zoom') ctx.font = `700 ${Math.floor(fsz*(1 + Math.sin(t*2 + i)/12))}px ${fontSelect.value}`;
-    if(anim === 'shake') dx = (Math.random() - 0.5) * 6;
-    const y = baseY + i*(fsz + 12) + dy;
-    ctx.strokeText(lines[i], canvas.width/2 + dx, y);
-    ctx.fillText(lines[i], canvas.width/2 + dx, y);
-  }
-
-  // watermark
-  if(toggleWatermark.checked){
-    ctx.globalAlpha = 0.95; ctx.font = '700 28px Inter'; ctx.fillStyle = '#111827'; ctx.fillText('BrainRotter', canvas.width - 260, canvas.height - 40); ctx.globalAlpha = 1;
+  // watermark text drawn in corner when enabled (canvas overlay)
+  if(watermarkToggle.checked){
+    ctx.font = '700 26px Inter';
+    ctx.fillStyle = '#111827';
+    ctx.fillText('BrainRotter', canvas.width - 240, canvas.height - 48);
   }
 
   requestAnimationFrame(drawLoop);
 }
 requestAnimationFrame(drawLoop);
 
-// ---- divider drag ----
-let dragging = false;
-divider.addEventListener('pointerdown', e=>{ dragging=true; divider.setPointerCapture(e.pointerId); });
-window.addEventListener('pointerup', ()=> dragging=false);
-window.addEventListener('pointermove', e=> { if(!dragging) return; const rect = document.querySelector('.phone').getBoundingClientRect(); const y = e.clientY - rect.top; dividerPct = clamp(y / rect.height, 0.22, 0.78); });
+// ---------- caption container styling apply ----------
+function updateCaptionStyle(){
+  captionContainer.style.bottom = (canvas.height * (1 - dividerPct) * 0.3) + 'px';
+  captionContainer.style.fontFamily = fontSelect.value;
+  captionContainer.style.color = fontColor.value;
+  captionContainer.style.fontSize = (fontSize.value || 56) + 'px';
+}
+fontSelect.addEventListener('change', updateCaptionStyle);
+fontSize.addEventListener('input', updateCaptionStyle);
+fontColor.addEventListener('input', updateCaptionStyle);
+updateCaptionStyle();
 
-// ---- export (canvas + optional audio) ----
+// ---------- export (canvas capture + optional audio merging) ----------
 async function buildMergedStream(durationMs=5500){
-  const fps = 30; const canvasStream = canvas.captureStream(fps);
+  const fps = 30;
+  const canvasStream = canvas.captureStream(fps);
+
+  // prioritise recordedAudioBuffer, then ttsAudioBuffer (from Eleven), else return video-only
   if(recordedAudioBuffer){
-    const ac = ensureAudioCtx(); const src = ac.createBufferSource(); src.buffer = recordedAudioBuffer;
-    const g = ac.createGain(); g.gain.value = 1.0; const dest = ac.createMediaStreamDestination(); src.connect(g).connect(dest);
-    src.start(0); setTimeout(()=>{ try{ src.stop(); }catch(e){} }, durationMs+200);
-    const merged = new MediaStream(); canvasStream.getVideoTracks().forEach(t=>merged.addTrack(t)); dest.stream.getAudioTracks().forEach(t=>merged.addTrack(t));
+    const ac = ensureAudioCtx();
+    const src = ac.createBufferSource();
+    src.buffer = recordedAudioBuffer;
+    const dest = ac.createMediaStreamDestination();
+    src.connect(dest);
+    src.start(0);
+    setTimeout(()=>{ try{ src.stop(); }catch(e){} }, durationMs+200);
+    const merged = new MediaStream();
+    canvasStream.getVideoTracks().forEach(t=> merged.addTrack(t));
+    dest.stream.getAudioTracks().forEach(t=> merged.addTrack(t));
     return merged;
   }
-  if(revealNodes && revealNodes.dest){
-    const merged = new MediaStream(); canvasStream.getVideoTracks().forEach(t=>merged.addTrack(t)); revealNodes.dest.stream.getAudioTracks().forEach(t=>merged.addTrack(t));
+
+  if(embedTTS.checked && ttsAudioBuffer){
+    const ac = ensureAudioCtx();
+    const src = ac.createBufferSource();
+    src.buffer = ttsAudioBuffer;
+    const dest = ac.createMediaStreamDestination();
+    src.connect(dest);
+    src.start(0);
+    setTimeout(()=>{ try{ src.stop(); }catch(e){} }, durationMs+200);
+    const merged = new MediaStream();
+    canvasStream.getVideoTracks().forEach(t=> merged.addTrack(t));
+    dest.stream.getAudioTracks().forEach(t=> merged.addTrack(t));
     return merged;
   }
+
+  // fallback: canvas only
   return canvasStream;
 }
 
 exportBtn.addEventListener('click', async ()=>{
   exportBtn.disabled = true; exportBtn.textContent = 'Preparing...';
+  // show caption sequence while recording
+  const words = parseInt(wordsPerChunk.value,10);
+  const ms = parseInt(chunkSpeed.value,10);
+  showChunksAndMaybeTTS(storyPrompt.value || '', words, ms);
+
   const stream = await buildMergedStream(5500);
-  let options = { mimeType: 'video/webm; codecs=vp9' }; if(!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/webm; codecs=vp8' };
+  let options = { mimeType: 'video/webm; codecs=vp9' };
+  if(!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/webm; codecs=vp8' };
   if(!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/webm' };
-  const recorded = []; let mr;
-  try { mr = new MediaRecorder(stream, options); } catch(e){ alert('Recording not supported: '+e.message); exportBtn.disabled=false; exportBtn.textContent='Export Video'; return; }
-  mr.ondataavailable = e => { if(e.data && e.data.size) recorded.push(e.data); };
-  mr.onstop = async ()=>{
-    const webmBlob = new Blob(recorded, { type:'video/webm' });
-    if(useMp4 && useMp4.checked){
-      exportBtn.textContent = 'Converting to MP4...';
-      try { const mp4 = await convertWebMToMP4(webmBlob); downloadBlob(mp4, `brainrot_${Date.now()}.mp4`); } catch(e){ console.error(e); downloadBlob(webmBlob, `brainrot_${Date.now()}.webm`); alert('MP4 convert failed — WEBM downloaded'); }
-      exportBtn.disabled=false; exportBtn.textContent='Export Video';
+
+  const recorded = [];
+  let mr;
+  try{
+    mr = new MediaRecorder(stream, options);
+  }catch(e){
+    alert('MediaRecorder not supported: ' + e.message);
+    exportBtn.disabled = false; exportBtn.textContent = 'Export Video';
+    return;
+  }
+  mr.ondataavailable = ev => { if(ev.data && ev.data.size) recorded.push(ev.data); };
+  mr.onstop = async () => {
+    const blob = new Blob(recorded, { type: 'video/webm' });
+    if(mp4Toggle.checked){
+      exportBtn.textContent = 'Converting to MP4... (may be slow)';
+      try{
+        const mp4 = await convertWebMToMP4(blob);
+        downloadBlob(mp4, `brainrot_${Date.now()}.mp4`);
+      }catch(e){
+        console.error(e);
+        downloadBlob(blob, `brainrot_${Date.now()}.webm`);
+        alert('MP4 conversion failed — saving WEBM instead.');
+      } finally {
+        exportBtn.disabled=false; exportBtn.textContent='Export Video';
+      }
     } else {
-      downloadBlob(webmBlob, `brainrot_${Date.now()}.webm`); exportBtn.disabled=false; exportBtn.textContent='Export Video';
+      downloadBlob(blob, `brainrot_${Date.now()}.webm`);
+      exportBtn.disabled=false; exportBtn.textContent='Export Video';
     }
   };
-  mr.start(); exportBtn.textContent='Recording...'; setTimeout(()=>{ try{ mr.stop(); }catch(e){} }, 5500);
+  mr.start();
+  exportBtn.textContent = 'Recording...';
+  setTimeout(()=>{ try{ mr.stop(); }catch(e){} }, 5500);
 });
 
-function downloadBlob(blob, name){ const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
-async function ensureFFmpeg(){ if(window.FFmpeg && window.FFmpeg.createFFmpeg) return window.FFmpeg; await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://unpkg.com/@ffmpeg/ffmpeg@0.11.12/dist/ffmpeg.min.js'; s.onload=res; s.onerror=()=>rej(new Error('ffmpeg load fail')); document.body.appendChild(s); }); return window.FFmpeg; }
-async function convertWebMToMP4(webmBlob){ const FF = await ensureFFmpeg(); const { createFFmpeg } = FF; const ff = createFFmpeg({ log:false }); await ff.load(); ff.FS('writeFile','in.webm', new Uint8Array(await webmBlob.arrayBuffer())); try{ await ff.run('-i','in.webm','-c:v','copy','-c:a','aac','out.mp4'); }catch(e){ await ff.run('-i','in.webm','-c:v','libx264','-preset','fast','-crf','23','-c:a','aac','out.mp4'); } const out = ff.FS('readFile','out.mp4'); ff.FS('unlink','in.webm'); ff.FS('unlink','out.mp4'); return new Blob([out.buffer], { type:'video/mp4' }); }
+function downloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
 
-// ---- small helpers ----
+// ffmpeg conversion (on-demand)
+async function ensureFFmpeg(){
+  if(ffmpegLoaded && window.FFmpeg) return window.FFmpeg;
+  await new Promise((res,rej)=>{
+    const s = document.createElement('script'); s.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.11.12/dist/ffmpeg.min.js';
+    s.onload = res; s.onerror = ()=> rej(new Error('Failed to load ffmpeg')); document.body.appendChild(s);
+  });
+  ffmpegLoaded = true;
+  return window.FFmpeg;
+}
+async function convertWebMToMP4(webmBlob){
+  const FF = await ensureFFmpeg();
+  const { createFFmpeg } = FF;
+  const ff = createFFmpeg({ log:false });
+  await ff.load();
+  ff.FS('writeFile','in.webm', new Uint8Array(await webmBlob.arrayBuffer()));
+  try{
+    await ff.run('-i','in.webm','-c:v','copy','-c:a','aac','out.mp4');
+  }catch(e){
+    await ff.run('-i','in.webm','-c:v','libx264','-preset','fast','-crf','23','-c:a','aac','out.mp4');
+  }
+  const out = ff.FS('readFile','out.mp4');
+  ff.FS('unlink','in.webm'); ff.FS('unlink','out.mp4');
+  return new Blob([out.buffer], { type: 'video/mp4' });
+}
+
+// ---------- combined caption + TTS preview helper ----------
+function showChunksAndMaybeTTS(text, words, ms){
+  // If ElevenLabs ttsAudioBuffer exists & embedTTS checked, play buffer and show chunks
+  if(voiceProvider.value === 'eleven' && ttsAudioBuffer && embedTTS.checked){
+    const ac = ensureAudioCtx();
+    const src = ac.createBufferSource(); src.buffer = ttsAudioBuffer; src.connect(ac.destination); src.start();
+    showChunks(text, words, ms, captionAnim.value);
+    return;
+  }
+  // else fallback to browser TTS while showing chunks
+  showChunks(text, words, ms, captionAnim.value);
+  playBrowserTTS(text, parseFloat(playbackRate.value));
+}
+
+// ---------- helper: show chunks (wrapper for caption container) ----------
+function showChunks(text, wordsPer, msPer, anim){
+  // reuse showChunks function from earlier (caption logic). We'll call preview/display function defined earlier.
+  showChunks_core(text, wordsPer, msPer, anim);
+}
+
+// We break caption show logic into a core function so we can call it from elsewhere.
+let caption_interval = null;
+function showChunks_core(text, wordsPer=3, msPer=420, anim='pop'){
+  if(caption_interval){ clearInterval(caption_interval); caption_interval = null; }
+  captionContainer.innerHTML = '';
+  const chunks = chunkTextForScript(text, wordsPer);
+  let idx = 0;
+  function showOne(){
+    captionContainer.innerHTML = '';
+    if(idx >= chunks.length) return;
+    const block = document.createElement('div');
+    block.style.fontSize = (parseInt(fontSize.value,10) || 56) + 'px';
+    block.style.color = fontColor.value || '#111827';
+    const words = chunks[idx].split(' ');
+    words.forEach((w,j) => {
+      const sp = document.createElement('span');
+      sp.textContent = w + (j===words.length-1 ? '' : ' ');
+      sp.className = 'caption-word';
+      block.appendChild(sp);
+      setTimeout(()=> sp.classList.add('caption-pop'), 60*j);
+    });
+    captionContainer.appendChild(block);
+    idx++;
+  }
+  showOne();
+  caption_interval = setInterval(()=>{
+    if(idx >= chunks.length){ clearInterval(caption_interval); caption_interval=null; return; }
+    showOne();
+  }, msPer);
+}
+
+function chunkTextForScript(text, n){
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  const chunks = [];
+  for(let i=0;i<words.length;i+=n) chunks.push(words.slice(i,i+n).join(' '));
+  return chunks;
+}
+
+// ---------- small utilities + init ----------
 function ensureAudioCtx(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+function playBrowserTTS(text, rate=1){ try{ window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate = rate; window.speechSynthesis.speak(u); }catch(e){ console.warn(e); } }
 
-// ---- init UI wiring ----
-(function init(){
-  generateStory(false);
-  layoutSelect.addEventListener('change', ()=>{ /* canvas uses layoutSelect.value */ });
-  helpBtn.addEventListener('click', ()=> alert('BrainRotter Help:\\n• New Story -> generate; Edit prompt to change text.\\n• Upload or record audio to embed voice in export.\\n• Export creates WEBM; MP4 conversion optional (may be slow).'));
-  window.speechSynthesis.onvoiceschanged = ()=> updateVoiceSelect();
-  updateVoiceSelect();
-})();
-function updateVoiceSelect(){ const vs = window.speechSynthesis.getVoices(); voiceSelect.innerHTML=''; vs.forEach((v,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=`${v.name} — ${v.lang}`; voiceSelect.appendChild(o); }); if(vs.length===0){ const o=document.createElement('option'); o.textContent='Browser voice'; voiceSelect.appendChild(o); } }
+// preview: fetch eleven + play + set ttsAudioBuffer if embed
+fetchElevenPreview && fetchElevenPreview.addEventListener('click', async ()=>{
+  const key = elevenKey.value.trim(), vid = elevenVoice.value.trim();
+  if(!key || !vid){ alert('Paste your ElevenLabs API key and voice id'); return; }
+  try{
+    fetchElevenPreview.disabled = true; fetchElevenPreview.textContent = 'Fetching...';
+    const buf = await (async ()=>{
+      const resp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(vid)}`, {
+        method:'POST',
+        headers: { 'xi-api-key': key, 'Accept':'audio/mpeg', 'Content-Type':'application/json' },
+        body: JSON.stringify({ text: storyPrompt.value || '', voice: vid })
+      });
+      if(!resp.ok) throw new Error('TTS failed: ' + resp.status);
+      const ab = await resp.arrayBuffer();
+      const ac = ensureAudioCtx();
+      return await ac.decodeAudioData(ab);
+    })();
+    ttsAudioBuffer = buf;
+    // play
+    const ac = ensureAudioCtx(); const src = ac.createBufferSource(); src.buffer = buf; src.connect(ac.destination); src.start();
+    fetchElevenPreview.disabled=false; fetchElevenPreview.textContent='Fetch & Preview';
+  }catch(err){
+    alert('ElevenLabs fetch error: ' + err.message);
+    fetchElevenPreview.disabled=false; fetchElevenPreview.textContent='Fetch & Preview';
+  }
+});
+
+// theme
+themeSelect.addEventListener('change', e => { document.body.className = e.target.value === 'dark' ? 'dark' : 'light'; });
+
+// help
+helpBtn.addEventListener('click', ()=> alert('BrainRotter Help:\\n- Add real MP4s to assets/videos/ and choose them in Local clip.\\n- For high-quality voice use ElevenLabs: paste API key + voice id, fetch and check "Embed TTS".\\n- Use "Preview Captions" to test timing. Export creates a WEBM downloadable file.'));
+
