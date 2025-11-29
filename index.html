@@ -9,16 +9,15 @@
 <body class="light">
   <div id="app">
     <header class="header">
-      <div class="branding">
+      <div class="brand">
         <div class="logo">BrainRotter</div>
-        <div class="subtitle">Relatable • Petty • Viral-ready Shorts</div>
+        <div class="sub">Slime • Satisfying • Viral-ready Shorts</div>
       </div>
-
       <div class="header-controls">
-        <label>Layout
-          <select id="layoutSelect" class="select">
-            <option value="split">Top video / Bottom captions</option>
-            <option value="overlay">Full-screen caption overlay</option>
+        <label class="small">Theme
+          <select id="themeSelect" class="select">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
           </select>
         </label>
         <button id="helpBtn" class="btn">Help</button>
@@ -26,117 +25,171 @@
     </header>
 
     <main class="main">
-      <section class="left">
+      <section class="center">
         <div class="phone" id="phonePreview">
+          <!-- actual video element used for source, canvas used for final rendering -->
+          <video id="sourceVideo" playsinline muted loop style="display:none"></video>
           <canvas id="renderCanvas" width="1080" height="1920"></canvas>
 
-          <div class="overlay-ui">
-            <div class="top-row">
-              <label class="file-btn">Upload Clip
-                <input id="videoUpload" type="file" accept="video/*" />
-              </label>
-
-              <select id="demoClipSelect" class="select">
-                <option value="">Demo loops</option>
-                <option value="slime">Satisfying slime</option>
-                <option value="cut">Crisp loop</option>
-              </select>
-
-              <button id="randomizeBtn" class="btn tiny">🎲</button>
-            </div>
-
-            <div id="divider" class="divider" title="Drag to resize"></div>
-
-            <div class="caption-panel">
-              <textarea id="storyPrompt" placeholder="Edit story or press New Story"></textarea>
-
-              <div class="caption-controls">
-                <label>Font
-                  <select id="fontSelect" class="select">
-                    <option>Inter</option><option>Impact</option><option>Arial</option><option>Georgia</option><option>Courier New</option>
-                  </select>
-                </label>
-
-                <label>Color
-                  <input type="color" id="fontColor" value="#111827" />
-                </label>
-
-                <label>Anim
-                  <select id="animSelect" class="select">
-                    <option value="static">Static</option><option value="bounce">Bounce</option><option value="zoom">Zoom</option><option value="shake">Shake</option>
-                  </select>
-                </label>
-
-                <label>Size
-                  <input id="fontSize" type="range" min="28" max="120" value="56" />
-                </label>
-
-                <label>Emoji
-                  <input id="emojiInput" placeholder="Add emoji (e.g. 💀,🔥)" />
-                </label>
-              </div>
-
-              <div class="caption-actions">
-                <select id="categoryFilter" class="select"><option value="any">Any genre</option></select>
-                <select id="lengthFilter" class="select"><option value="any">Any length</option><option value="short">Short</option><option value="medium">Medium</option><option value="long">Long</option></select>
-
-                <button id="newStoryBtn" class="btn primary">New Story</button>
-                <button id="regenBtn" class="btn">Regenerate</button>
-                <button id="ttsBtn" class="btn">🔊 Preview Voice</button>
-              </div>
-            </div>
-
-            <img id="revealImg" class="reveal" alt="reveal" />
-          </div>
+          <!-- visual overlay for reveal image -->
+          <img id="revealImg" class="reveal" alt="reveal" />
         </div>
 
-        <div class="controls-row">
-          <label class="small">Upload voice (optional)
-            <input id="audioUpload" type="file" accept="audio/*" />
+        <div class="bottom-quick">
+          <label class="small">Choose demo clip
+            <select id="demoClip" class="select">
+              <option value="">— demo procedural —</option>
+              <option value="slime_proc">Slime (procedural)</option>
+              <option value="cut_proc">Crisp Cut (procedural)</option>
+            </select>
           </label>
 
-          <button id="recordBtn" class="btn">Record Mic</button>
-          <button id="stopRecBtn" class="btn" disabled>Stop</button>
-
-          <label class="small">MP4 convert
-            <input id="useMp4" type="checkbox" />
+          <label class="small">Local clip
+            <select id="localClip" class="select">
+              <option value="">— choose local asset —</option>
+            </select>
           </label>
 
-          <button id="exportBtn" class="btn primary">Export Video</button>
+          <label class="small file-btn">Upload clip
+            <input id="videoUpload" type="file" accept="video/*" />
+          </label>
+
+          <button id="randomAll" class="btn">🎲 Random</button>
         </div>
       </section>
 
       <aside class="right">
-        <h3>Editor</h3>
+        <div class="panel">
+          <h3>Story & Captions</h3>
 
-        <label>Voice (preview)
-          <select id="voiceSelect" class="select"></select>
-        </label>
+          <div class="form-row">
+            <label>Genre
+              <select id="genreSelect" class="select"><option value="any">Any</option></select>
+            </label>
 
-        <label>Playback rate
-          <input id="playbackRate" type="range" min="0.6" max="1.6" step="0.1" value="1" />
-        </label>
+            <label>Length
+              <select id="lengthSelect" class="select">
+                <option value="any">Any</option>
+                <option value="short">Short (~7s)</option>
+                <option value="medium">Medium (~15s)</option>
+                <option value="long">Long (~25s)</option>
+              </select>
+            </label>
+          </div>
 
-        <fieldset class="options">
-          <legend>Options</legend>
-          <label><input id="toggleWatermark" type="checkbox" checked/> Watermark</label>
-          <label><input id="toggleRevealAudio" type="checkbox" checked/> Reveal sound</label>
-          <label><input id="randomClipsAllowed" type="checkbox" checked/> Use demo clips</label>
-        </fieldset>
+          <textarea id="storyPrompt" rows="6" placeholder="Editable story — press New Story to auto-fill"></textarea>
 
-        <h4>Effects</h4>
-        <label><input type="checkbox" id="fxGlitch"/> Glitch</label>
-        <label><input type="checkbox" id="fxZoom"/> Zoom</label>
-        <label><input type="checkbox" id="fxBass"/> Meme bass</label>
+          <div class="form-row">
+            <label>Font
+              <select id="fontSelect" class="select">
+                <option>Inter</option><option>Impact</option><option>Arial</option><option>Georgia</option><option>Courier New</option>
+              </select>
+            </label>
 
-        <hr />
-        <div class="notes muted">
-          Export creates a `.webm`. MP4 conversion loads ffmpeg.wasm (optional & slower). For reliable embedded audio, upload or record audio before exporting.
+            <label>Size
+              <input id="fontSize" type="range" min="30" max="96" value="56" />
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label>Color
+              <input type="color" id="fontColor" value="#111827" />
+            </label>
+
+            <label>Words / chunk
+              <select id="wordsPerChunk" class="select">
+                <option value="2">2 words</option>
+                <option value="3" selected>3 words</option>
+                <option value="4">4 words</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label>Caption animation
+              <select id="captionAnim" class="select">
+                <option value="pop">Pop-in (TikTok)</option>
+                <option value="slide">Slide up</option>
+                <option value="bounce">Bouncy</option>
+              </select>
+            </label>
+
+            <label>Chunk speed
+              <input id="chunkSpeed" type="range" min="180" max="900" value="420" />
+              <small class="muted">ms per chunk</small>
+            </label>
+          </div>
+
+          <div class="form-row">
+            <button id="newStoryBtn" class="btn primary">New Story</button>
+            <button id="regenBtn" class="btn">Regenerate</button>
+            <button id="previewCaptions" class="btn">Preview Captions</button>
+          </div>
+
+          <hr />
+
+          <h3>Voice (Realistic)</h3>
+          <div class="muted">Choose voice source</div>
+
+          <div class="form-row">
+            <label>Provider
+              <select id="voiceProvider" class="select">
+                <option value="browser">Browser TTS (fallback)</option>
+                <option value="eleven">ElevenLabs (API key)</option>
+              </select>
+            </label>
+          </div>
+
+          <div id="elevenForm" style="display:none">
+            <label>ElevenLabs API Key
+              <input id="elevenKey" type="text" placeholder="paste your ElevenLabs key" class="select" />
+            </label>
+            <label>Choose voice id
+              <input id="elevenVoice" type="text" placeholder="e.g. 'alloy' or other voice id" class="select" />
+            </label>
+            <div class="muted">(Get voice id from ElevenLabs site — paste it here.)</div>
+            <button id="fetchElevenPreview" class="btn">Fetch & Preview</button>
+          </div>
+
+          <div class="form-row">
+            <label>Playback rate
+              <input id="playbackRate" type="range" min="0.6" max="1.4" step="0.05" value="1" />
+            </label>
+            <label><input id="embedTTS" type="checkbox" /> Embed TTS audio into export (if fetched)</label>
+          </div>
+
+          <div class="form-row">
+            <label class="small">Or upload voice
+              <input id="audioUpload" type="file" accept="audio/*" />
+            </label>
+            <button id="recordVoice" class="btn">Record Mic</button>
+            <button id="stopRecord" class="btn" disabled>Stop</button>
+          </div>
+
+          <div class="form-row">
+            <button id="previewVoice" class="btn">Preview Voice Sync</button>
+          </div>
+
+          <hr />
+
+          <h3>Export</h3>
+          <div class="form-row">
+            <label><input id="watermarkToggle" type="checkbox" checked/> Watermark</label>
+            <label><input id="mp4Toggle" type="checkbox" /> Convert to MP4 (ffmpeg.wasm)</label>
+          </div>
+
+          <div class="form-row">
+            <button id="exportBtn" class="btn primary">Export Video</button>
+          </div>
+
+          <div class="muted small" style="margin-top:10px">
+            Notes: To embed high-quality AI voice reliably, use the ElevenLabs option and paste your key, then fetch the TTS audio and check "Embed TTS audio". Browser TTS is still usable for preview.
+          </div>
         </div>
       </aside>
     </main>
 
-    <footer class="footer">© BrainRotter 2025</footer>
+    <footer class="footer">© BrainRotter</footer>
   </div>
 
   <script src="stories.js" defer></script>
