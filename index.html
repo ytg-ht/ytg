@@ -11,17 +11,11 @@
     <header class="header">
       <div class="branding">
         <div class="logo">BrainRotter</div>
-        <div class="subtitle">Relatable. Petty. Viral-ready shorts — fully customizable.</div>
+        <div class="subtitle">Relatable • Petty • Viral-ready Shorts</div>
       </div>
 
       <div class="header-controls">
-        <label class="small">Theme
-          <select id="themeSelect" class="select">
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </label>
-        <label class="small">Layout
+        <label>Layout
           <select id="layoutSelect" class="select">
             <option value="split">Top video / Bottom captions</option>
             <option value="overlay">Full-screen caption overlay</option>
@@ -45,10 +39,10 @@
               <select id="demoClipSelect" class="select">
                 <option value="">Demo loops</option>
                 <option value="slime">Satisfying slime</option>
-                <option value="cut">Crisp cut loop</option>
+                <option value="cut">Crisp loop</option>
               </select>
 
-              <button id="randomizeBtn" class="btn tiny">🎲 Randomize</button>
+              <button id="randomizeBtn" class="btn tiny">🎲</button>
             </div>
 
             <div id="divider" class="divider" title="Drag to resize"></div>
@@ -59,24 +53,17 @@
               <div class="caption-controls">
                 <label>Font
                   <select id="fontSelect" class="select">
-                    <option>Inter</option>
-                    <option>Impact</option>
-                    <option>Arial</option>
-                    <option>Georgia</option>
-                    <option>Courier New</option>
+                    <option>Inter</option><option>Impact</option><option>Arial</option><option>Georgia</option><option>Courier New</option>
                   </select>
                 </label>
 
                 <label>Color
-                  <input type="color" id="fontColor" value="#111111" />
+                  <input type="color" id="fontColor" value="#111827" />
                 </label>
 
                 <label>Anim
                   <select id="animSelect" class="select">
-                    <option value="static">Static</option>
-                    <option value="bounce">Bounce</option>
-                    <option value="zoom">Zoom</option>
-                    <option value="shake">Shake</option>
+                    <option value="static">Static</option><option value="bounce">Bounce</option><option value="zoom">Zoom</option><option value="shake">Shake</option>
                   </select>
                 </label>
 
@@ -90,16 +77,8 @@
               </div>
 
               <div class="caption-actions">
-                <select id="categoryFilter" class="select">
-                  <option value="any">Any genre</option>
-                </select>
-
-                <select id="lengthFilter" class="select">
-                  <option value="any">Any length</option>
-                  <option value="short">Short</option>
-                  <option value="medium">Medium</option>
-                  <option value="long">Long</option>
-                </select>
+                <select id="categoryFilter" class="select"><option value="any">Any genre</option></select>
+                <select id="lengthFilter" class="select"><option value="any">Any length</option><option value="short">Short</option><option value="medium">Medium</option><option value="long">Long</option></select>
 
                 <button id="newStoryBtn" class="btn primary">New Story</button>
                 <button id="regenBtn" class="btn">Regenerate</button>
@@ -108,7 +87,6 @@
             </div>
 
             <img id="revealImg" class="reveal" alt="reveal" />
-
           </div>
         </div>
 
@@ -119,6 +97,10 @@
 
           <button id="recordBtn" class="btn">Record Mic</button>
           <button id="stopRecBtn" class="btn" disabled>Stop</button>
+
+          <label class="small">MP4 convert
+            <input id="useMp4" type="checkbox" />
+          </label>
 
           <button id="exportBtn" class="btn primary">Export Video</button>
         </div>
@@ -144,24 +126,20 @@
 
         <h4>Effects</h4>
         <label><input type="checkbox" id="fxGlitch"/> Glitch</label>
-        <label><input type="checkbox" id="fxZoom"/> Zoom spam</label>
+        <label><input type="checkbox" id="fxZoom"/> Zoom</label>
         <label><input type="checkbox" id="fxBass"/> Meme bass</label>
 
         <hr />
-
         <div class="notes muted">
-          Export: .webm by default. MP4 conversion is optional (loads ffmpeg-wasm).
-          To ensure voice is embedded, upload or record audio before export.
+          Export creates a `.webm`. MP4 conversion loads ffmpeg.wasm (optional & slower). For reliable embedded audio, upload or record audio before exporting.
         </div>
       </aside>
     </main>
 
-    <footer class="footer">© BrainRotter 2025 — built for viral energy</footer>
+    <footer class="footer">© BrainRotter 2025</footer>
   </div>
 
-  <!-- data and scripts -->
   <script src="stories.js" defer></script>
-  <script src="memes.js" defer></script>
   <script src="script.js" defer></script>
 </body>
 </html>
