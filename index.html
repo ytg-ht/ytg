@@ -7,58 +7,54 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="light">
-
   <div id="app">
     <header class="header">
-      <div class="brand">
+      <div class="branding">
         <div class="logo">BrainRotter</div>
-        <div class="tag">Light-mode · Viral Shorts · Fully configurable</div>
+        <div class="subtitle">Relatable. Petty. Viral-ready shorts — fully customizable.</div>
       </div>
 
-      <div class="top-controls">
+      <div class="header-controls">
         <label class="small">Theme
-          <select id="themeSelect">
+          <select id="themeSelect" class="select">
             <option value="light">Light</option>
             <option value="dark">Dark</option>
           </select>
         </label>
-
-        <label class="small">Export MP4 (optional)
-          <input id="useMp4" type="checkbox" />
+        <label class="small">Layout
+          <select id="layoutSelect" class="select">
+            <option value="split">Top video / Bottom captions</option>
+            <option value="overlay">Full-screen caption overlay</option>
+          </select>
         </label>
-
         <button id="helpBtn" class="btn">Help</button>
       </div>
     </header>
 
-    <main class="content">
-      <section class="left-panel">
-        <div class="phone-frame">
+    <main class="main">
+      <section class="left">
+        <div class="phone" id="phonePreview">
           <canvas id="renderCanvas" width="1080" height="1920"></canvas>
 
-          <!-- Overlay UI inside preview -->
-          <div class="overlay">
-
-            <div class="overlay-top">
-              <label class="btn small file-btn">Upload Clip
+          <div class="overlay-ui">
+            <div class="top-row">
+              <label class="file-btn">Upload Clip
                 <input id="videoUpload" type="file" accept="video/*" />
               </label>
 
-              <select id="demoClips" class="select">
+              <select id="demoClipSelect" class="select">
                 <option value="">Demo loops</option>
                 <option value="slime">Satisfying slime</option>
-                <option value="cut">AI-cut looping</option>
+                <option value="cut">Crisp cut loop</option>
               </select>
 
-              <label class="small">Randomize
-                <button id="randomizeAll" class="btn tiny">🎲</button>
-              </label>
+              <button id="randomizeBtn" class="btn tiny">🎲 Randomize</button>
             </div>
 
             <div id="divider" class="divider" title="Drag to resize"></div>
 
             <div class="caption-panel">
-              <textarea id="storyPrompt" rows="3" placeholder="Edit story prompt here or press New Story"></textarea>
+              <textarea id="storyPrompt" placeholder="Edit story or press New Story"></textarea>
 
               <div class="caption-controls">
                 <label>Font
@@ -72,7 +68,7 @@
                 </label>
 
                 <label>Color
-                  <input type="color" id="fontColor" value="#000000" />
+                  <input type="color" id="fontColor" value="#111111" />
                 </label>
 
                 <label>Anim
@@ -88,25 +84,35 @@
                   <input id="fontSize" type="range" min="28" max="120" value="56" />
                 </label>
 
-                <label class="small">Emoji
+                <label>Emoji
                   <input id="emojiInput" placeholder="Add emoji (e.g. 💀,🔥)" />
                 </label>
               </div>
 
               <div class="caption-actions">
-                <button id="newStory" class="btn primary">New Story</button>
-                <button id="regenerate" class="btn">Regenerate</button>
-                <button id="ttsPlay" class="btn">🔊 Preview Voice</button>
+                <select id="categoryFilter" class="select">
+                  <option value="any">Any genre</option>
+                </select>
+
+                <select id="lengthFilter" class="select">
+                  <option value="any">Any length</option>
+                  <option value="short">Short</option>
+                  <option value="medium">Medium</option>
+                  <option value="long">Long</option>
+                </select>
+
+                <button id="newStoryBtn" class="btn primary">New Story</button>
+                <button id="regenBtn" class="btn">Regenerate</button>
+                <button id="ttsBtn" class="btn">🔊 Preview Voice</button>
               </div>
             </div>
 
-            <!-- reveal image -->
             <img id="revealImg" class="reveal" alt="reveal" />
 
           </div>
         </div>
 
-        <div class="phone-actions">
+        <div class="controls-row">
           <label class="small">Upload voice (optional)
             <input id="audioUpload" type="file" accept="audio/*" />
           </label>
@@ -118,48 +124,44 @@
         </div>
       </section>
 
-      <aside class="right-panel">
-        <h3>Editor Controls</h3>
+      <aside class="right">
+        <h3>Editor</h3>
 
-        <label>Category
-          <select id="categorySelect" class="select"></select>
-        </label>
-
-        <label>Voice (SpeechSynthesis)
+        <label>Voice (preview)
           <select id="voiceSelect" class="select"></select>
         </label>
 
-        <label>Playback Rate
+        <label>Playback rate
           <input id="playbackRate" type="range" min="0.6" max="1.6" step="0.1" value="1" />
         </label>
 
         <fieldset class="options">
-          <legend>Customization</legend>
+          <legend>Options</legend>
           <label><input id="toggleWatermark" type="checkbox" checked/> Watermark</label>
-          <label><input id="toggleRevealAudio" type="checkbox" checked/> Auto reveal sound</label>
-          <label><input id="allowRandomClips" type="checkbox" checked/> Allow built-in demo clips</label>
+          <label><input id="toggleRevealAudio" type="checkbox" checked/> Reveal sound</label>
+          <label><input id="randomClipsAllowed" type="checkbox" checked/> Use demo clips</label>
         </fieldset>
 
-        <h4>Effects (user can toggle)</h4>
-        <label><input type="checkbox" id="fx_glitch"/> Glitch</label>
-        <label><input type="checkbox" id="fx_zoom"/> Zoom spam</label>
-        <label><input type="checkbox" id="fx_bass"/> Meme bass</label>
+        <h4>Effects</h4>
+        <label><input type="checkbox" id="fxGlitch"/> Glitch</label>
+        <label><input type="checkbox" id="fxZoom"/> Zoom spam</label>
+        <label><input type="checkbox" id="fxBass"/> Meme bass</label>
 
         <hr />
 
-        <div class="notes">
-          <strong>Export:</strong> default `.webm` (fast). MP4 conversion uses ffmpeg.wasm and is optional.
-          <p class="muted">SpeechSynthesis preview plays the AI voice in your browser. To embed voice into exported video reliably, upload an audio file or record your voice — the exporter merges audio & canvas client-side.</p>
+        <div class="notes muted">
+          Export: .webm by default. MP4 conversion is optional (loads ffmpeg-wasm).
+          To ensure voice is embedded, upload or record audio before export.
         </div>
       </aside>
     </main>
 
-    <footer class="footer">© 2025 BrainRotter — built for viral chaos</footer>
+    <footer class="footer">© BrainRotter 2025 — built for viral energy</footer>
   </div>
 
-  <!-- Data + App -->
-  <script src="stories.js"></script>
-  <script src="memes.js"></script>
-  <script src="script.js"></script>
+  <!-- data and scripts -->
+  <script src="stories.js" defer></script>
+  <script src="memes.js" defer></script>
+  <script src="script.js" defer></script>
 </body>
 </html>
