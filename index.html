@@ -1,33 +1,58 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Satisfying Shorts Generator</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Satisfying Facts — Demo</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="app">
+    <aside class="sidebar">
+      <h2>Controls</h2>
 
-    <div class="sidebar">
-        <h2>Controls</h2>
-        <button id="prevVideo">⬅ Previous</button>
-        <button id="nextVideo">Next ➡</button>
-        <button id="newFacts">🔁 New Facts</button>
-        <button id="playVoice">🔊 Play Voice</button>
-    </div>
+      <label>Facts per video
+        <input id="factsCount" type="range" min="1" max="15" value="7">
+        <span id="factsCountVal">7</span>
+      </label>
 
-    <div class="contentArea">
-        <div class="videoBox">
-            <video id="slimeVideo" src="slime1.mp4" autoplay loop muted></video>
-        </div>
+      <label>Words per chunk
+        <input id="wordsPerChunk" type="number" min="2" max="6" value="4">
+      </label>
 
-        <div class="captionBox">
-            <p id="factText">Click “New Facts” to start!</p>
-        </div>
-    </div>
+      <label>Pacing (per chunk ms)
+        <input id="chunkMs" type="number" min="400" max="3000" value="900">
+      </label>
 
-    <script src="facts.js"></script>
-    <script src="script.js"></script>
+      <button id="generateBtn">Generate & Play</button>
+      <button id="nextVideoBtn">Next Clip Now</button>
 
+      <hr>
+
+      <details>
+        <summary>Voice (ElevenLabs) — optional</summary>
+        <p style="font-size:0.9rem">Paste your ElevenLabs API key & voice id here to use Brian's voice (dynamic generation). <strong>Do not commit keys to repo.</strong></p>
+        <input id="elevenKey" placeholder="ElevenLabs API Key" autocomplete="off">
+        <input id="elevenVoiceId" placeholder="ElevenLabs Voice ID (ex: 'brian')" autocomplete="off">
+        <button id="saveEleven">Save for session</button>
+        <button id="clearEleven">Clear key</button>
+        <p id="elevenStatus" class="muted"></p>
+      </details>
+
+      <hr>
+      <p class="muted">Brian test (uploaded): <br><small><a href="media/testvoice.mp3" target="_blank">media/testvoice.mp3</a></small></p>
+    </aside>
+
+    <main class="content">
+      <div class="videoWrap">
+        <video id="satisfy-video" playsinline muted crossorigin="anonymous"></video>
+        <div id="captionOverlay" class="caption">Loading…</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- facts.js must be loaded before script.js (it defines the `facts` array) -->
+  <script src="facts.js" defer></script>
+  <script src="script.js" defer></script>
 </body>
 </html>
