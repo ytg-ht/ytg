@@ -1,108 +1,33 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BrainRotter — Facts Shorts</title>
-  <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satisfying Shorts Generator</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="root">
-    <header class="topbar">
-      <div class="brand">BrainRotter</div>
-      <div class="hint">Facts • AI-voiced • Shorts</div>
-    </header>
 
-    <main class="layout">
-      <section class="preview-area">
-        <div class="phone">
-          <video id="sourceVideo" playsinline muted loop style="display:none"></video>
-          <canvas id="renderCanvas" width="1080" height="1920"></canvas>
+    <div class="sidebar">
+        <h2>Controls</h2>
+        <button id="prevVideo">⬅ Previous</button>
+        <button id="nextVideo">Next ➡</button>
+        <button id="newFacts">🔁 New Facts</button>
+        <button id="playVoice">🔊 Play Voice</button>
+    </div>
 
-          <!-- caption overlay (big subtitle style) -->
-          <div id="captionOverlay" class="caption-overlay" aria-hidden="true"></div>
-
-          <!-- small reveal image (optional) -->
-          <img id="revealImg" class="reveal" alt="" />
+    <div class="contentArea">
+        <div class="videoBox">
+            <video id="slimeVideo" src="slime1.mp4" autoplay loop muted></video>
         </div>
 
-        <div class="controls-row">
-          <button id="toggleSidebar" class="btn">☰ Controls</button>
-          <select id="videoSelect" class="small-select">
-            <option value="">Demo slime (built-in)</option>
-          </select>
-          <button id="generateBtn" class="btn primary">Generate Preview</button>
-          <button id="exportBtn" class="btn">Export .webm</button>
+        <div class="captionBox">
+            <p id="factText">Click “New Facts” to start!</p>
         </div>
+    </div>
 
-        <div class="footnote">Default facts per short: 7 — you can change on the right. Hit space to preview captions.</div>
-      </section>
+    <script src="facts.js"></script>
+    <script src="script.js"></script>
 
-      <aside id="sidebar" class="sidebar collapsed">
-        <div class="sidebar-inner">
-          <button id="closeSidebar" class="close">✕</button>
-
-          <h3>Facts · Settings</h3>
-
-          <label>Category
-            <select id="factsSource" class="input">
-              <option value="random">Random</option>
-              <option value="animals">Animals</option>
-              <option value="space">Space</option>
-              <option value="human">Human</option>
-            </select>
-          </label>
-
-          <label>Facts per short
-            <input id="factsCount" type="number" min="3" max="12" value="7" class="input"/>
-          </label>
-
-          <label>List of facts (editable)
-            <textarea id="factsEditor" rows="8" class="input"></textarea>
-          </label>
-
-          <hr/>
-
-          <h4>Voice</h4>
-          <label>Provider
-            <select id="voiceProvider" class="input">
-              <option value="eleven">ElevenLabs (recommended)</option>
-              <option value="browser">Browser TTS (preview only)</option>
-            </select>
-          </label>
-
-          <div id="elevenBox">
-            <label>ElevenLabs API Key
-              <input id="elevenApiKey" class="input" placeholder="paste API key"/>
-            </label>
-            <label>ElevenLabs voice id
-              <input id="elevenVoiceId" class="input" placeholder="voice id or name"/>
-            </label>
-            <button id="fetchTTSBtn" class="btn">Fetch TTS for facts</button>
-          </div>
-
-          <label>Playback rate
-            <input id="playbackRate" type="range" min="0.7" max="1.4" step="0.05" value="1"/>
-          </label>
-
-          <label><input id="embedTTS" type="checkbox" checked/> Embed fetched audio into export</label>
-
-          <hr/>
-
-          <button id="previewBtn" class="btn">Preview Captions & Voice</button>
-          <button id="randomFactsBtn" class="btn">Randomize Facts</button>
-
-          <div class="small muted" style="margin-top:10px">
-            Add MP4s to <code>assets/videos/</code> with names like <code>slime1.mp4</code> to use your own clips.
-          </div>
-        </div>
-      </aside>
-    </main>
-
-    <footer class="footer">© BrainRotter</footer>
-  </div>
-
-  <script src="facts.js" defer></script>
-  <script src="script.js" defer></script>
 </body>
 </html>
