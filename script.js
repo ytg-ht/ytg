@@ -1,68 +1,91 @@
-// script.js — BrainRotter facts mode
-// NOTE: For highest-quality exported voice, use ElevenLabs. Paste API key + voice id and click "Fetch TTS".
-// Browser TTS will be used as fallback for preview only.
+// script.js — BrainRotter simplified modern build
+// Requires facts.js earlier (window.pickFacts)
 
+// ---------- DOM ----------
 const canvas = document.getElementById('renderCanvas');
 const ctx = canvas.getContext('2d', { alpha: false });
 const sourceVideo = document.getElementById('sourceVideo');
 const captionOverlay = document.getElementById('captionOverlay');
 const revealImg = document.getElementById('revealImg');
 
-// UI elements
-const factsCount = document.getElementById('factsCount');
-const factsSource = document.getElementById('factsSource');
-const factsEditor = document.getElementById('factsEditor');
-const newFactsBtn = document.getElementById('newFactsBtn');
-const randomizeBtn = document.getElementById('randomizeBtn');
-const previewCaptionsBtn = document.getElementById('previewCaptionsBtn');
+const toggleSidebar = document.getElementById('toggleSidebar');
+const sidebar = document.getElementById('sidebar');
+const closeSidebar = document.getElementById('closeSidebar');
 
-const fontSelect = document.getElementById('fontSelect');
-const fontSizeInput = document.getElementById('fontSize');
-
-const voiceProvider = document.getElementById('voiceProvider');
-const elevenBox = document.getElementById('elevenBox');
-const elevenApiKey = document.getElementById('elevenApiKey');
-const elevenVoiceId = document.getElementById('elevenVoiceId');
-const fetchTTSBtn = document.getElementById('fetchTTSBtn');
-const previewVoiceBtn = document.getElementById('previewVoiceBtn');
-const playbackRate = document.getElementById('playbackRate');
-const embedTTS = document.getElementById('embedTTS');
+const videoSelect = document.getElementById('videoSelect');
+const generateBtn = document.getElementById('generateBtn');
 const exportBtn = document.getElementById('exportBtn');
 
+const factsSource = document.getElementById('factsSource');
+const factsCount = document.getElementById('factsCount');
+const factsEditor = document.getElementById('factsEditor');
+const fetchTTSBtn = document.getElementById('fetchTTSBtn');
+const previewBtn = document.getElementById('previewBtn');
+const randomFactsBtn = document.getElementById('randomFactsBtn');
+
+const voiceProvider = document.getElementById('voiceProvider');
+const elevenApiKey = document.getElementById('elevenApiKey');
+const elevenVoiceId = document.getElementById('elevenVoiceId');
+const playbackRate = document.getElementById('playbackRate');
+const embedTTS = document.getElementById('embedTTS');
+
+// small helpers
+const choose = (a) => a[Math.floor(Math.random()*a.length)];
 let audioCtx = null;
-let fetchedAudioBuffers = []; // array of AudioBuffer for current facts (if fetched)
-let currentFacts = [];
-let playingSeq = false;
+function ensureAudioCtx(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
 
-// helper
-const choose = arr => arr[Math.floor(Math.random()*arr.length)];
-const clamp = (a,b,c) => Math.max(b, Math.min(c, a));
+// ---------- UI: sidebar toggle ----------
+toggleSidebar.addEventListener('click', ()=> {
+  sidebar.classList.toggle('collapsed');
+});
+closeSidebar && closeSidebar.addEventListener('click', ()=> sidebar.classList.add('collapsed'));
 
-// procedural slime demo (renders moving blobs to a hidden canvas, captured to a looping blob)
+// ---------- load local video assets (if any) ----------
+async function scanLocalVideos(){
+  // We can't read filesystem from browser; but if user added known filenames, list them
+  const candidates = [
+    'assets/videos/slime1.mp4',
+    'assets/videos/slime2.mp4',
+    'assets/videos/soap1.mp4',
+    'assets/videos/sand1.mp4'
+  ];
+  videoSelect.innerHTML = `<option value="">Demo slime (built-in)</option>`;
+  for(const src of candidates){
+    try{
+      // quick probe: try to fetch headers (CORS will apply on GitHub Pages but same origin usually works)
+      const resp = await fetch(src, { method:'HEAD' });
+      if(resp && resp.ok){
+        const name = src.split('/').pop();
+        const opt = document.createElement('option'); opt.value = src; opt.textContent = name; videoSelect.appendChild(opt);
+      }
+    }catch(e){
+      // ignore — not present or cross-origin blocked
+    }
+  }
+}
+scanLocalVideos();
+
+// ---------- procedural demo slime (fallback) ----------
 function makeProceduralSlime(){
   const off = document.createElement('canvas');
   off.width = 720; off.height = 1280;
   const g = off.getContext('2d');
-  let t = 0;
+  let t=0;
   function frame(){
-    // background
-    g.fillStyle = '#041018';
-    g.fillRect(0,0,off.width,off.height);
-    // blobs
+    g.fillStyle = '#041018'; g.fillRect(0,0,off.width,off.height);
     for(let i=0;i<14;i++){
-      const x = (i*140 + t*6) % (off.width + 240) - 120;
+      const x = (i*140 + t*6) % (off.width+240) - 120;
       const r = 40 + Math.sin((t+i)/6)*18;
       g.beginPath();
-      g.fillStyle = `hsla(${(i*24 + t*3) % 360},80%,60%,0.9)`;
-      g.arc(x, off.height/2 + Math.sin(i + t/9) * 46, Math.abs(r), 0, Math.PI*2);
+      g.fillStyle = `hsla(${(i*24 + t*3)%360},80%,60%,0.95)`;
+      g.arc(x, off.height/2 + Math.sin(i + t/9)*46, Math.abs(r), 0, Math.PI*2);
       g.fill();
     }
-    t++;
-    requestAnimationFrame(frame);
+    t++; requestAnimationFrame(frame);
   }
   frame();
 
-  // convert to short looping video blob
+  // create short looped webm blob for video element
   const stream = off.captureStream(30);
   const mr = new MediaRecorder(stream);
   let chunks = [];
@@ -72,348 +95,316 @@ function makeProceduralSlime(){
     const url = URL.createObjectURL(blob);
     sourceVideo.src = url; sourceVideo.loop = true; sourceVideo.muted = true; sourceVideo.play().catch(()=>{});
   };
-  mr.start();
-  setTimeout(()=> mr.stop(), 1200);
+  mr.start(); setTimeout(()=> mr.stop(), 1200);
 }
 makeProceduralSlime();
 
-// drawing loop: simply fills canvas with video frame scaled to top area + neutral bottom
+// if user picks a local video in select
+videoSelect.addEventListener('change', (e)=>{
+  const v = e.target.value;
+  if(!v){ makeProceduralSlime(); return; }
+  sourceVideo.src = v; sourceVideo.loop = true; sourceVideo.muted = true; sourceVideo.play().catch(()=>{});
+});
+
+// ---------- drawing canvas (video top, white bottom) ----------
 let dividerPct = 0.62;
 function drawLoop(){
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
   const topH = Math.floor(canvas.height * dividerPct);
-
-  // draw video scaled to topH
   if(sourceVideo && sourceVideo.readyState >= 2){
-    const vw = sourceVideo.videoWidth || sourceVideo.width;
-    const vh = sourceVideo.videoHeight || sourceVideo.height;
+    const vw = sourceVideo.videoWidth || sourceVideo.width, vh = sourceVideo.videoHeight || sourceVideo.height;
     const scale = Math.max(canvas.width / vw, topH / vh);
-    const sw = vw * scale, sh = vh * scale;
-    const sx = (canvas.width - sw)/2, sy = (topH - sh)/2;
+    const sw = vw * scale, sh = vh * scale; const sx = (canvas.width - sw)/2, sy = (topH - sh)/2;
     ctx.drawImage(sourceVideo, sx, sy, sw, sh);
   } else {
-    ctx.fillStyle = '#eefaff';
-    ctx.fillRect(0,0,canvas.width,topH);
+    ctx.fillStyle = '#eefaff'; ctx.fillRect(0,0,canvas.width,topH);
   }
-
-  // bottom area (clean white)
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, topH, canvas.width, canvas.height - topH);
-
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, topH, canvas.width, canvas.height - topH);
   requestAnimationFrame(drawLoop);
 }
 requestAnimationFrame(drawLoop);
 
-// ------------ Facts generation & UI wiring ------------
-function populateFactsEditorFromPool(){
-  const count = Math.max(1, Math.min(12, parseInt(factsCount.value,10) || 7));
+// ---------- facts generation ----------
+function populateFactsEditor(){
+  const n = Math.max(3, Math.min(12, parseInt(factsCount.value,10) || 7));
   const pool = factsSource.value || 'random';
-  const picked = window.pickFacts(pool, count);
-  currentFacts = picked.slice();
-  factsEditor.value = picked.join("\n");
-  fetchedAudioBuffers = []; // clear any previously fetched audio
+  const arr = (pool === 'random') ? pickFacts('random', n) : pickFacts(pool, n);
+  factsEditor.value = arr.join("\n");
 }
-newFactsBtn.addEventListener('click', populateFactsEditorFromPool);
+factsCount.addEventListener('change', populateFactsEditor);
+factsSource.addEventListener('change', populateFactsEditor);
+window.addEventListener('load', populateFactsEditor);
 
-randomizeBtn.addEventListener('click', ()=>{
-  // shuffle facts order or pick anew
-  if(currentFacts.length > 0){
-    currentFacts = currentFacts.sort(()=>Math.random()-0.5);
-    factsEditor.value = currentFacts.join("\n");
-    fetchedAudioBuffers = [];
-  } else {
-    populateFactsEditorFromPool();
-  }
-});
-
-// when source selection changes, auto fill
-factsSource.addEventListener('change', populateFactsEditorFromPool);
-window.addEventListener('load', populateFactsEditorFromPool);
-
-// font & size applied to caption overlay
-function applyCaptionStyle(){
-  captionOverlay.style.fontFamily = fontSelect.value;
-  captionOverlay.style.fontSize = (parseInt(fontSizeInput.value,10) || 56) + 'px';
+// ---------- caption chunking: show 3 words at a time (pop-in) ----------
+function chunkText(text, wordsPer=3){
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  const chunks = [];
+  for(let i=0;i<words.length;i+=wordsPer) chunks.push(words.slice(i,i+wordsPer).join(' '));
+  return chunks;
 }
-fontSelect.addEventListener('change', applyCaptionStyle);
-fontSizeInput.addEventListener('input', applyCaptionStyle);
-applyCaptionStyle();
-
-// ------------ Caption display & sequencing ------------
-// show single fact in overlay (clears previous)
-function showFactText(text){
+function showChunk(chunkText){
   captionOverlay.innerHTML = '';
-  const container = document.createElement('div');
-  // split into words for subtle animation
-  const words = text.split(/\s+/);
-  words.forEach((w, i) => {
+  const wrapper = document.createElement('div');
+  const words = chunkText.split(/\s+/);
+  words.forEach((w,i)=>{
     const sp = document.createElement('span');
     sp.className = 'word';
-    sp.textContent = w + (i === words.length-1 ? '' : ' ');
-    container.appendChild(sp);
-    // stagger in
-    setTimeout(()=> sp.classList.add('show'), 60 * i);
+    sp.textContent = w + (i===words.length-1 ? '' : ' ');
+    wrapper.appendChild(sp);
+    setTimeout(()=> sp.classList.add('show'), 50 * i);
   });
-  captionOverlay.appendChild(container);
+  captionOverlay.appendChild(wrapper);
 }
 
-// play sequence of AudioBuffers or fallback to browser TTS
-async function playSequenceWithCaptions(facts, audioBuffers, rate=1){
-  if(playingSeq) return;
-  playingSeq = true;
-  const ac = new (window.AudioContext || window.webkitAudioContext)();
-  for(let i=0;i<facts.length;i++){
-    const fact = facts[i];
-    showFactText(fact);
-    if(audioBuffers && audioBuffers[i]){
-      // play audio buffer
-      const src = ac.createBufferSource();
-      src.buffer = audioBuffers[i];
-      src.playbackRate.value = rate;
-      const dest = ac.destination;
-      src.connect(dest);
-      src.start();
-      // wait for end
-      await new Promise(res => {
-        src.onended = res;
-      });
-    } else {
-      // fallback: browser TTS (not embeddable reliably)
-      await speakBrowserTTS(fact, rate);
-    }
-    // small pause between facts
-    await new Promise(r => setTimeout(r, 220));
+// show one fact with chunk timing (used for preview)
+async function showFactWithTiming(factText, msPerChunk=2000){
+  const chunks = chunkText(factText, 3);
+  for(let i=0;i<chunks.length;i++){
+    showChunk(chunks[i]);
+    await new Promise(r => setTimeout(r, msPerChunk));
   }
-  captionOverlay.innerHTML = '';
-  playingSeq = false;
 }
 
-// simple browser TTS promise wrapper
+// ---------- voice handlers ----------
+// Browser TTS wrapper (promise)
 function speakBrowserTTS(text, rate=1){
   return new Promise(res => {
     try{
+      window.speechSynthesis.cancel();
       const utt = new SpeechSynthesisUtterance(text);
       utt.rate = rate;
       utt.onend = () => res();
       window.speechSynthesis.speak(utt);
     }catch(e){
-      // if TTS fails, fallback to timed delay estimating ~words*220ms
       const est = Math.max(900, text.split(/\s+/).length * 220);
       setTimeout(res, est);
     }
   });
 }
 
-// preview captions button
-previewCaptionsBtn.addEventListener('click', async ()=>{
-  // use fetchedAudioBuffers if present and length matches; else use browser TTS
-  const facts = factsEditor.value.split('\n').map(s=>s.trim()).filter(Boolean);
-  if(facts.length === 0){ alert('No facts to preview'); return; }
-  const buffers = (fetchedAudioBuffers.length === facts.length) ? fetchedAudioBuffers : null;
-  await playSequenceWithCaptions(facts, buffers, parseFloat(playbackRate.value || 1));
-});
-
-// ------------ ElevenLabs TTS fetch per fact ------------
-
-function ensureAudioCtx(){
-  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  return audioCtx;
-}
-
-// fetch audio buffer for a single fact using ElevenLabs.
-// ElevenLabs endpoint (example) expects POST to /v1/text-to-speech/{voice_id} with {text}.
-// The response should be audio/mpeg. This code decodes it into AudioBuffer.
-async function fetchElevenFactTTS(factText, apiKey, voiceId){
+// ElevenLabs helper (returns AudioBuffer)
+async function fetchElevenTTS(text, apiKey, voiceId){
   if(!apiKey || !voiceId) throw new Error('Missing ElevenLabs API key or voice id');
-  const endpoint = `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}`;
-  const resp = await fetch(endpoint, {
-    method: 'POST',
+  const url = `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}`;
+  const resp = await fetch(url, {
+    method:'POST',
     headers: {
-      'Accept': 'audio/mpeg',
-      'Content-Type': 'application/json',
+      'Accept':'audio/mpeg',
+      'Content-Type':'application/json',
       'xi-api-key': apiKey
     },
-    body: JSON.stringify({ text: factText })
+    body: JSON.stringify({ text })
   });
   if(!resp.ok){
     const txt = await resp.text();
-    throw new Error(`ElevenLabs error ${resp.status}: ${txt}`);
+    throw new Error('TTS failed: ' + resp.status + ' ' + txt);
   }
   const ab = await resp.arrayBuffer();
   const ac = ensureAudioCtx();
-  const buf = await ac.decodeAudioData(ab);
-  return buf;
+  return await ac.decodeAudioData(ab);
 }
 
-// fetch TTS for all facts in editor, store in fetchedAudioBuffers
+// play AudioBuffer and await end
+function playBuffer(buf, rate=1){
+  return new Promise(res => {
+    const ac = ensureAudioCtx();
+    const src = ac.createBufferSource(); src.buffer = buf; src.playbackRate.value = rate;
+    src.connect(ac.destination);
+    src.onended = res;
+    src.start();
+  });
+}
+
+// fetched buffers for current facts (parallel to facts list)
+let fetchedBuffers = [];
+
+// fetch buffers for all facts (click handler)
 fetchTTSBtn.addEventListener('click', async ()=>{
   const key = elevenApiKey.value.trim();
   const vid = elevenVoiceId.value.trim();
   if(!key || !vid){ alert('Paste ElevenLabs API key and voice id'); return; }
   const facts = factsEditor.value.split('\n').map(s=>s.trim()).filter(Boolean);
   if(facts.length === 0){ alert('No facts to fetch'); return; }
-  fetchedAudioBuffers = [];
+  fetchedBuffers = [];
   fetchTTSBtn.disabled = true; fetchTTSBtn.textContent = 'Fetching...';
   try{
     for(let i=0;i<facts.length;i++){
-      const f = facts[i];
-      const buf = await fetchElevenFactTTS(f, key, vid);
-      fetchedAudioBuffers.push(buf);
-      // small delay to avoid spamming API too quickly
-      await new Promise(r => setTimeout(r, 180));
+      const buf = await fetchElevenTTS(facts[i], key, vid);
+      fetchedBuffers.push(buf);
+      await new Promise(r => setTimeout(r, 160)); // small throttle
     }
-    alert('Fetched TTS audio for all facts. You can preview or export with embedded audio.');
+    alert('Fetched audio for all facts. You can preview & export with embedded audio.');
   }catch(err){
-    console.error(err);
-    alert('TTS fetch error: ' + err.message);
-    fetchedAudioBuffers = [];
-  } finally {
-    fetchTTSBtn.disabled = false; fetchTTSBtn.textContent = 'Fetch TTS for current facts';
+    console.error(err); alert('TTS fetch error: ' + err.message);
+    fetchedBuffers = [];
+  }finally{
+    fetchTTSBtn.disabled = false; fetchTTSBtn.textContent = 'Fetch TTS for facts';
   }
 });
 
-// preview voice sync button: if fetched audio exists, use it; else use browser TTS
-document.getElementById('previewVoiceBtn').addEventListener('click', async ()=>{
+// preview action: speak + show captions in sync (uses fetchedBuffers if available)
+previewBtn.addEventListener('click', async ()=>{
   const facts = factsEditor.value.split('\n').map(s=>s.trim()).filter(Boolean);
   if(facts.length === 0){ alert('No facts to preview'); return; }
-  const buffers = (fetchedAudioBuffers.length === facts.length) ? fetchedAudioBuffers : null;
-  await playSequenceWithCaptions(facts, buffers, parseFloat(playbackRate.value || 1));
+  const rate = parseFloat(playbackRate.value || 1);
+  // if we have buffers and lengths match, use them
+  if(fetchedBuffers.length === facts.length){
+    for(let i=0;i<facts.length;i++){
+      const buf = fetchedBuffers[i];
+      // compute chunk durations: split fact into chunks and divide buffer duration
+      const chunks = chunkText(facts[i], 3);
+      const msPerChunk = Math.max(500, (buf.duration * 1000) / Math.max(1, chunks.length));
+      // start playing buffer (non-blocking) and show chunks timed
+      playBuffer(buf, rate);
+      for(let c=0;c<chunks.length;c++){
+        showChunk(chunks[c]);
+        await new Promise(r => setTimeout(r, msPerChunk));
+      }
+      await new Promise(r => setTimeout(r, 120));
+    }
+  } else {
+    // fallback to browser TTS; show chunks in medium pacing (2s per chunk)
+    for(let i=0;i<facts.length;i++){
+      const fact = facts[i];
+      const p = speakBrowserTTS(fact, rate);
+      await showFactWithTiming(fact, 2000);
+      await p;
+      await new Promise(r => setTimeout(r, 120));
+    }
+  }
+  captionOverlay.innerHTML = '';
 });
 
-// ------------ Export: record canvas + (embedded) TTS audio stream ------------
-async function buildMergedStreamForExport(durationMs = 1000 * Math.max(5, currentFacts.length * 2.2)){
-  // canvas stream
-  const fps = 30;
-  const canvasStream = canvas.captureStream(fps);
-
-  // prefer embedded fetched audio buffers if user checked embedTTS and we have them
-  if(embedTTS.checked && fetchedAudioBuffers.length > 0){
-    const ac = ensureAudioCtx();
-    const dest = ac.createMediaStreamDestination();
-    // schedule each buffer to play immediately one after another
-    let start = ac.currentTime + 0.2;
-    for(let i=0;i<fetchedAudioBuffers.length;i++){
-      const src = ac.createBufferSource();
-      src.buffer = fetchedAudioBuffers[i];
-      src.connect(dest);
-      src.start(start);
-      start += (fetchedAudioBuffers[i].duration + 0.15);
-    }
-    // copy video + audio tracks into merged stream
-    const merged = new MediaStream();
-    canvasStream.getVideoTracks().forEach(t => merged.addTrack(t));
-    dest.stream.getAudioTracks().forEach(t => merged.addTrack(t));
-    return { stream: merged, approxDuration: start * 1000 - ac.currentTime * 1000 + 300 };
-  }
-
-  // else fallback: no embedded audio; export video-only
-  return { stream: canvasStream, approxDuration: durationMs };
+// randomize facts
+randomFactsBtn.addEventListener('click', ()=> populateFactsEditorFromPools());
+function populateFactsEditorFromPools(){
+  const n = Math.max(3, Math.min(12, parseInt(factsCount.value,10) || 7));
+  const pool = factsSource.value || 'random';
+  const arr = (pool === 'random') ? pickFacts('random', n) : pickFacts(pool, n);
+  factsEditor.value = arr.join("\n");
+  fetchedBuffers = [];
 }
+randomFactsBtn.addEventListener('click', populateFactsEditorFromPools);
 
+// generate button: shows a small loading then auto-previews (with a double-check step)
+generateBtn.addEventListener('click', async ()=>{
+  generateBtn.disabled = true; generateBtn.textContent = 'Building...';
+  // quick "double-check": if Eleven selected but no API key present warn user
+  if(voiceProvider.value === 'eleven' && (!elevenApiKey.value.trim() || !elevenVoiceId.value.trim())){
+    const ok = confirm('You selected ElevenLabs but did not paste API key/voice id. Continue with Browser TTS?');
+    if(!ok){ generateBtn.disabled=false; generateBtn.textContent='Generate Preview'; return; }
+  }
+  // short debounce loading animation
+  await new Promise(r => setTimeout(r, 700));
+  // auto-preview (same as previewBtn)
+  previewBtn.click();
+  generateBtn.disabled=false; generateBtn.textContent='Generate Preview';
+});
+
+// export button (records canvas + embeds fetched audio when available)
 exportBtn.addEventListener('click', async ()=>{
   exportBtn.disabled = true; exportBtn.textContent = 'Preparing...';
-  // capture current facts from editor
   const facts = factsEditor.value.split('\n').map(s=>s.trim()).filter(Boolean);
-  if(facts.length === 0){ alert('No facts to export'); exportBtn.disabled = false; exportBtn.textContent = 'Export .webm'; return; }
-  // set currentFacts for overlay timing
-  currentFacts = facts.slice();
+  if(facts.length === 0){ alert('No facts to export'); exportBtn.disabled=false; exportBtn.textContent='Export .webm'; return; }
 
-  // before exporting, start showing captions synced while we record
-  // Build merged stream
-  const { stream, approxDuration } = await buildMergedStreamForExport(Math.max(5000, facts.length * 2000));
-  let mime = 'video/webm; codecs=vp9';
-  if(!MediaRecorder.isTypeSupported(mime)) mime = 'video/webm; codecs=vp8';
-  if(!MediaRecorder.isTypeSupported(mime)) mime = 'video/webm';
-
-  const recorderChunks = [];
-  let mr;
-  try{
-    mr = new MediaRecorder(stream, { mimeType: mime });
-  }catch(e){
-    alert('Export not supported: ' + e.message);
-    exportBtn.disabled = false; exportBtn.textContent = 'Export .webm';
-    return;
+  // build merged stream: canvas video + optional audio stream (fetched buffers) if embed checked
+  const fps = 30;
+  const canvasStream = canvas.captureStream(fps);
+  let mergedStream = canvasStream;
+  let approxMs = 2000;
+  if(embedTTS.checked && fetchedBuffers.length === facts.length && fetchedBuffers.length > 0){
+    const ac = ensureAudioCtx();
+    const dest = ac.createMediaStreamDestination();
+    let start = ac.currentTime + 0.2;
+    for(let i=0;i<fetchedBuffers.length;i++){
+      const src = ac.createBufferSource(); src.buffer = fetchedBuffers[i];
+      src.connect(dest); src.start(start);
+      start += fetchedBuffers[i].duration + 0.12;
+    }
+    mergedStream = new MediaStream();
+    canvasStream.getVideoTracks().forEach(t=>mergedStream.addTrack(t));
+    dest.stream.getAudioTracks().forEach(t=>mergedStream.addTrack(t));
+    approxMs = Math.round((start - ac.currentTime) * 1000 + 500);
+  } else {
+    // estimate duration: facts * ~2s per chunk set — rough
+    approxMs = Math.max(5000, facts.length * 2200);
   }
 
-  mr.ondataavailable = ev => { if(ev.data && ev.data.size) recorderChunks.push(ev.data); };
-  mr.onstop = async ()=>{
-    const blob = new Blob(recorderChunks, { type: 'video/webm' });
+  // start MediaRecorder
+  let options = { mimeType: 'video/webm; codecs=vp9' };
+  if(!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/webm; codecs=vp8' };
+  if(!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/webm' };
+
+  const recorded = [];
+  let mr;
+  try {
+    mr = new MediaRecorder(mergedStream, options);
+  } catch(e){
+    alert('Recording not supported: ' + e.message);
+    exportBtn.disabled=false; exportBtn.textContent='Export .webm';
+    return;
+  }
+  mr.ondataavailable = ev => { if(ev.data && ev.data.size) recorded.push(ev.data); };
+  mr.onstop = ()=> {
+    const blob = new Blob(recorded, { type: options.mimeType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = `brainrot_facts_${Date.now()}.webm`; document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
-    exportBtn.disabled = false; exportBtn.textContent = 'Export .webm';
+    exportBtn.disabled=false; exportBtn.textContent='Export .webm';
   };
 
-  // Start recording and also play captions + audio (if available)
+  // start recorder & schedule captions for export
   mr.start();
   exportBtn.textContent = 'Recording...';
 
-  // Start sequence: if fetchedAudioBuffers present and embedded, they already scheduled inside buildMergedStreamForExport
-  // But we still must display captions in sync for the duration we expect
-  // We'll show each caption for the corresponding audio duration (if fetchedBuffers), else estimate time
-  if(embedTTS.checked && fetchedAudioBuffers.length === facts.length && fetchedAudioBuffers.length > 0){
-    // show captions timed to buffer durations
+  // schedule captions matching buffers if embedded; else approximate chunk timing
+  if(embedTTS.checked && fetchedBuffers.length === facts.length){
     const ac = ensureAudioCtx();
-    let tNow = ac.currentTime + 0.2;
+    let startTime = ac.currentTime + 220/1000; // small offset
     for(let i=0;i<facts.length;i++){
-      const duration = fetchedAudioBuffers[i].duration * 1000;
-      // schedule caption display
-      setTimeout(() => showFactText(facts[i]), Math.round((tNow - ac.currentTime) * 1000));
-      tNow += fetchedAudioBuffers[i].duration + 0.12;
+      const chunks = chunkText(facts[i], 3);
+      const msPerChunk = Math.max(600, (fetchedBuffers[i].duration * 1000) / Math.max(1, chunks.length));
+      let offset = Math.round((startTime - ac.currentTime) * 1000);
+      for(let c=0;c<chunks.length;c++){
+        setTimeout(()=> showChunk(chunks[c]), offset);
+        offset += msPerChunk;
+      }
+      startTime += fetchedBuffers[i].duration + 0.12;
     }
+    setTimeout(()=> { try{ mr.stop(); }catch(e){} captionOverlay.innerHTML=''; }, approxMs + 400);
   } else {
-    // no embedded audio: show each fact for ~2.2s
+    // no embedded audio: show chunks approx 2s per chunk
     let offset = 0;
     for(let i=0;i<facts.length;i++){
-      setTimeout(()=> showFactText(facts[i]), offset);
-      offset += 2200;
+      const chunks = chunkText(facts[i], 3);
+      let innerOff = 0;
+      for(let c=0;c<chunks.length;c++){
+        setTimeout(()=> showChunk(chunks[c]), offset + innerOff);
+        innerOff += 2000;
+      }
+      offset += Math.max(innerOff, 2200);
     }
+    setTimeout(()=> { try{ mr.stop(); }catch(e){} captionOverlay.innerHTML=''; }, offset + 600);
   }
-
-  // stop recorder after approxDuration
-  setTimeout(()=> {
-    try{ mr.stop(); }catch(e){}
-    captionOverlay.innerHTML = '';
-  }, Math.max(approxDuration, 2500));
 });
 
-// small helper to show a fact immediately (used in export timing)
-function showFactText(text){
-  captionOverlay.innerHTML = '';
-  const wrapper = document.createElement('div');
-  const words = text.split(/\s+/);
-  words.forEach((w,i)=>{
-    const s = document.createElement('span');
-    s.className = 'word';
-    s.textContent = w + (i===words.length-1 ? '' : ' ');
-    wrapper.appendChild(s);
-    setTimeout(()=> s.classList.add('show'), 40*i);
-  });
-  captionOverlay.appendChild(wrapper);
-}
+// keyboard space => preview
+document.body.addEventListener('keydown', (e)=> {
+  if(e.code === 'Space'){ e.preventDefault(); previewBtn.click(); }
+});
 
-// ---------- quick UX: update editor when facts count changes ----------
-factsCount.addEventListener('change', ()=> populateFactsEditorFromPool());
-function populateFactsEditorFromPool(){
-  const n = Math.max(1, Math.min(12, parseInt(factsCount.value,10) || 7));
-  const pool = factsSource.value || 'random';
-  const arr = window.pickFacts(pool, n);
-  currentFacts = arr.slice();
-  factsEditor.value = arr.join("\n");
-  fetchedAudioBuffers = [];
-}
-populateFactsEditorFromPool();
-
-// show small reveal occasionally (fun)
-function smallReveal(){
-  revealImg.src = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1080' height='600'><rect width='100%' height='100%' fill='%23f6f8fb'/><text x='540' y='160' font-size='44' font-family='Impact,Arial' text-anchor='middle' fill='%230a1220'>FACTS</text><text x='540' y='360' font-size='20' text-anchor='middle' fill='%237c3aed'>Wait for the good one</text></svg>`;
+// small reveal every 12s for liveliness
+setInterval(()=> {
+  revealImg.src = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1080' height='600'><rect width='100%' height='100%' fill='%23f6f8fb'/><text x='540' y='160' font-size='44' font-family='Arial' text-anchor='middle' fill='%230a1220'>FACTS</text><text x='540' y='360' font-size='20' text-anchor='middle' fill='%237c3aed'>fun fact time</text></svg>`;
   revealImg.classList.add('show');
-  setTimeout(()=> revealImg.classList.remove('show'), 1500);
-}
-setInterval(smallReveal, 14_000);
+  setTimeout(()=> revealImg.classList.remove('show'), 1000);
+}, 12000);
 
-// keyboard: space preview captions
-document.body.addEventListener('keydown', (e) => {
-  if(e.code === 'Space') { e.preventDefault(); previewCaptionsBtn.click(); }
-});
+// utility: chunkText used in export scheduling too
+function chunkText(text, wordsPer=3){
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  const chunks = [];
+  for(let i=0;i<words.length;i+=wordsPer) chunks.push(words.slice(i,i+wordsPer).join(' '));
+  return chunks;
+}
+
