@@ -3,196 +3,118 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BrainRotter — Shorts Generator</title>
+  <title>BrainRotter — Facts Shorts Generator</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="light">
   <div id="app">
     <header class="header">
-      <div class="brand">
+      <div class="branding">
         <div class="logo">BrainRotter</div>
-        <div class="sub">Slime • Satisfying • Viral-ready Shorts</div>
-      </div>
-      <div class="header-controls">
-        <label class="small">Theme
-          <select id="themeSelect" class="select">
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </label>
-        <button id="helpBtn" class="btn">Help</button>
+        <div class="subtitle">7 facts / short • AI-voiced • Slime vibes</div>
       </div>
     </header>
 
     <main class="main">
       <section class="center">
-        <div class="phone" id="phonePreview">
-          <!-- actual video element used for source, canvas used for final rendering -->
+        <div class="phone" id="phone">
           <video id="sourceVideo" playsinline muted loop style="display:none"></video>
           <canvas id="renderCanvas" width="1080" height="1920"></canvas>
-
-          <!-- visual overlay for reveal image -->
           <img id="revealImg" class="reveal" alt="reveal" />
+          <!-- captions overlay (DOM for crisp text & accessibility) -->
+          <div id="captionOverlay" class="caption-overlay" aria-hidden="true"></div>
         </div>
 
-        <div class="bottom-quick">
-          <label class="small">Choose demo clip
-            <select id="demoClip" class="select">
-              <option value="">— demo procedural —</option>
-              <option value="slime_proc">Slime (procedural)</option>
-              <option value="cut_proc">Crisp Cut (procedural)</option>
-            </select>
-          </label>
-
-          <label class="small">Local clip
-            <select id="localClip" class="select">
-              <option value="">— choose local asset —</option>
-            </select>
-          </label>
-
-          <label class="small file-btn">Upload clip
-            <input id="videoUpload" type="file" accept="video/*" />
-          </label>
-
-          <button id="randomAll" class="btn">🎲 Random</button>
-        </div>
+        <div class="footer-hint">Preview: 1080 × 1920 — Click "Export" to download .webm with embedded audio (ElevenLabs recommended)</div>
       </section>
 
       <aside class="right">
         <div class="panel">
-          <h3>Story & Captions</h3>
+          <h3>Facts Builder</h3>
 
-          <div class="form-row">
-            <label>Genre
-              <select id="genreSelect" class="select"><option value="any">Any</option></select>
+          <div class="row">
+            <label>Facts per video
+              <input id="factsCount" type="number" min="1" max="12" value="7" />
             </label>
 
-            <label>Length
-              <select id="lengthSelect" class="select">
-                <option value="any">Any</option>
-                <option value="short">Short (~7s)</option>
-                <option value="medium">Medium (~15s)</option>
-                <option value="long">Long (~25s)</option>
+            <label>Source
+              <select id="factsSource">
+                <option value="random">Random facts</option>
+                <option value="science">Science</option>
+                <option value="history">History</option>
+                <option value="weird">Weird / Odd</option>
               </select>
             </label>
           </div>
 
-          <textarea id="storyPrompt" rows="6" placeholder="Editable story — press New Story to auto-fill"></textarea>
+          <textarea id="factsEditor" rows="8" placeholder="Facts appear here. Edit freely or press New Facts"></textarea>
 
-          <div class="form-row">
+          <div class="row">
             <label>Font
-              <select id="fontSelect" class="select">
+              <select id="fontSelect">
                 <option>Inter</option><option>Impact</option><option>Arial</option><option>Georgia</option><option>Courier New</option>
               </select>
             </label>
 
-            <label>Size
-              <input id="fontSize" type="range" min="30" max="96" value="56" />
+            <label>Font size
+              <input id="fontSize" type="range" min="32" max="88" value="56" />
             </label>
           </div>
 
-          <div class="form-row">
-            <label>Color
-              <input type="color" id="fontColor" value="#111827" />
-            </label>
-
-            <label>Words / chunk
-              <select id="wordsPerChunk" class="select">
-                <option value="2">2 words</option>
-                <option value="3" selected>3 words</option>
-                <option value="4">4 words</option>
-              </select>
-            </label>
-          </div>
-
-          <div class="form-row">
-            <label>Caption animation
-              <select id="captionAnim" class="select">
-                <option value="pop">Pop-in (TikTok)</option>
-                <option value="slide">Slide up</option>
-                <option value="bounce">Bouncy</option>
-              </select>
-            </label>
-
-            <label>Chunk speed
-              <input id="chunkSpeed" type="range" min="180" max="900" value="420" />
-              <small class="muted">ms per chunk</small>
-            </label>
-          </div>
-
-          <div class="form-row">
-            <button id="newStoryBtn" class="btn primary">New Story</button>
-            <button id="regenBtn" class="btn">Regenerate</button>
-            <button id="previewCaptions" class="btn">Preview Captions</button>
+          <div class="actions">
+            <button id="newFactsBtn" class="btn primary">New Facts</button>
+            <button id="randomizeBtn" class="btn">Randomize</button>
+            <button id="previewCaptionsBtn" class="btn">Preview Captions</button>
           </div>
 
           <hr />
 
-          <h3>Voice (Realistic)</h3>
-          <div class="muted">Choose voice source</div>
+          <h3>AI Voice (quality)</h3>
+          <div class="muted">Use ElevenLabs for best exports. Browser TTS as fallback.</div>
 
-          <div class="form-row">
+          <div class="row">
             <label>Provider
-              <select id="voiceProvider" class="select">
+              <select id="voiceProvider">
+                <option value="eleven">ElevenLabs (recommended)</option>
                 <option value="browser">Browser TTS (fallback)</option>
-                <option value="eleven">ElevenLabs (API key)</option>
               </select>
             </label>
           </div>
 
-          <div id="elevenForm" style="display:none">
+          <div id="elevenBox" style="display:block">
             <label>ElevenLabs API Key
-              <input id="elevenKey" type="text" placeholder="paste your ElevenLabs key" class="select" />
+              <input id="elevenApiKey" type="text" placeholder="paste your key here" />
             </label>
-            <label>Choose voice id
-              <input id="elevenVoice" type="text" placeholder="e.g. 'alloy' or other voice id" class="select" />
+            <label>Voice ID
+              <input id="elevenVoiceId" type="text" placeholder="e.g. 'alloy' or voice UUID" />
             </label>
-            <div class="muted">(Get voice id from ElevenLabs site — paste it here.)</div>
-            <button id="fetchElevenPreview" class="btn">Fetch & Preview</button>
+            <div class="muted">Get an ElevenLabs API key & voice id. This page will fetch audio for each fact.</div>
+            <button id="fetchTTSBtn" class="btn">Fetch TTS for current facts</button>
           </div>
 
-          <div class="form-row">
+          <div class="row">
             <label>Playback rate
-              <input id="playbackRate" type="range" min="0.6" max="1.4" step="0.05" value="1" />
+              <input id="playbackRate" type="range" min="0.7" max="1.4" step="0.05" value="1" />
             </label>
-            <label><input id="embedTTS" type="checkbox" /> Embed TTS audio into export (if fetched)</label>
+            <label><input id="embedTTS" type="checkbox" checked /> Embed fetched audio in export</label>
           </div>
 
-          <div class="form-row">
-            <label class="small">Or upload voice
-              <input id="audioUpload" type="file" accept="audio/*" />
-            </label>
-            <button id="recordVoice" class="btn">Record Mic</button>
-            <button id="stopRecord" class="btn" disabled>Stop</button>
-          </div>
-
-          <div class="form-row">
-            <button id="previewVoice" class="btn">Preview Voice Sync</button>
-          </div>
-
-          <hr />
-
-          <h3>Export</h3>
-          <div class="form-row">
-            <label><input id="watermarkToggle" type="checkbox" checked/> Watermark</label>
-            <label><input id="mp4Toggle" type="checkbox" /> Convert to MP4 (ffmpeg.wasm)</label>
-          </div>
-
-          <div class="form-row">
-            <button id="exportBtn" class="btn primary">Export Video</button>
+          <div class="actions">
+            <button id="previewVoiceBtn" class="btn">Preview Voice Sync</button>
+            <button id="exportBtn" class="btn primary">Export .webm</button>
           </div>
 
           <div class="muted small" style="margin-top:10px">
-            Notes: To embed high-quality AI voice reliably, use the ElevenLabs option and paste your key, then fetch the TTS audio and check "Embed TTS audio". Browser TTS is still usable for preview.
+            Tip: For reliable exported voice, paste a valid ElevenLabs key & voice id and click "Fetch TTS". If no key is provided, browser TTS will be used for preview only.
           </div>
         </div>
       </aside>
     </main>
 
-    <footer class="footer">© BrainRotter</footer>
+    <footer class="footer">© BrainRotter — facts mode</footer>
   </div>
 
-  <script src="stories.js" defer></script>
+  <script src="facts.js" defer></script>
   <script src="script.js" defer></script>
 </body>
 </html>
