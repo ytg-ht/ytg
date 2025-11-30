@@ -3,115 +3,103 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BrainRotter — Facts Shorts Generator</title>
+  <title>BrainRotter — Facts Shorts</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="light">
-  <div id="app">
-    <header class="header">
-      <div class="branding">
-        <div class="logo">BrainRotter</div>
-        <div class="subtitle">7 facts / short • AI-voiced • Slime vibes</div>
-      </div>
+<body>
+  <div id="root">
+    <header class="topbar">
+      <div class="brand">BrainRotter</div>
+      <div class="hint">Facts • AI-voiced • Shorts</div>
     </header>
 
-    <main class="main">
-      <section class="center">
-        <div class="phone" id="phone">
+    <main class="layout">
+      <section class="preview-area">
+        <div class="phone">
           <video id="sourceVideo" playsinline muted loop style="display:none"></video>
           <canvas id="renderCanvas" width="1080" height="1920"></canvas>
-          <img id="revealImg" class="reveal" alt="reveal" />
-          <!-- captions overlay (DOM for crisp text & accessibility) -->
+
+          <!-- caption overlay (big subtitle style) -->
           <div id="captionOverlay" class="caption-overlay" aria-hidden="true"></div>
+
+          <!-- small reveal image (optional) -->
+          <img id="revealImg" class="reveal" alt="" />
         </div>
 
-        <div class="footer-hint">Preview: 1080 × 1920 — Click "Export" to download .webm with embedded audio (ElevenLabs recommended)</div>
+        <div class="controls-row">
+          <button id="toggleSidebar" class="btn">☰ Controls</button>
+          <select id="videoSelect" class="small-select">
+            <option value="">Demo slime (built-in)</option>
+          </select>
+          <button id="generateBtn" class="btn primary">Generate Preview</button>
+          <button id="exportBtn" class="btn">Export .webm</button>
+        </div>
+
+        <div class="footnote">Default facts per short: 7 — you can change on the right. Hit space to preview captions.</div>
       </section>
 
-      <aside class="right">
-        <div class="panel">
-          <h3>Facts Builder</h3>
+      <aside id="sidebar" class="sidebar collapsed">
+        <div class="sidebar-inner">
+          <button id="closeSidebar" class="close">✕</button>
 
-          <div class="row">
-            <label>Facts per video
-              <input id="factsCount" type="number" min="1" max="12" value="7" />
-            </label>
+          <h3>Facts · Settings</h3>
 
-            <label>Source
-              <select id="factsSource">
-                <option value="random">Random facts</option>
-                <option value="science">Science</option>
-                <option value="history">History</option>
-                <option value="weird">Weird / Odd</option>
-              </select>
-            </label>
-          </div>
+          <label>Category
+            <select id="factsSource" class="input">
+              <option value="random">Random</option>
+              <option value="animals">Animals</option>
+              <option value="space">Space</option>
+              <option value="human">Human</option>
+            </select>
+          </label>
 
-          <textarea id="factsEditor" rows="8" placeholder="Facts appear here. Edit freely or press New Facts"></textarea>
+          <label>Facts per short
+            <input id="factsCount" type="number" min="3" max="12" value="7" class="input"/>
+          </label>
 
-          <div class="row">
-            <label>Font
-              <select id="fontSelect">
-                <option>Inter</option><option>Impact</option><option>Arial</option><option>Georgia</option><option>Courier New</option>
-              </select>
-            </label>
+          <label>List of facts (editable)
+            <textarea id="factsEditor" rows="8" class="input"></textarea>
+          </label>
 
-            <label>Font size
-              <input id="fontSize" type="range" min="32" max="88" value="56" />
-            </label>
-          </div>
+          <hr/>
 
-          <div class="actions">
-            <button id="newFactsBtn" class="btn primary">New Facts</button>
-            <button id="randomizeBtn" class="btn">Randomize</button>
-            <button id="previewCaptionsBtn" class="btn">Preview Captions</button>
-          </div>
+          <h4>Voice</h4>
+          <label>Provider
+            <select id="voiceProvider" class="input">
+              <option value="eleven">ElevenLabs (recommended)</option>
+              <option value="browser">Browser TTS (preview only)</option>
+            </select>
+          </label>
 
-          <hr />
-
-          <h3>AI Voice (quality)</h3>
-          <div class="muted">Use ElevenLabs for best exports. Browser TTS as fallback.</div>
-
-          <div class="row">
-            <label>Provider
-              <select id="voiceProvider">
-                <option value="eleven">ElevenLabs (recommended)</option>
-                <option value="browser">Browser TTS (fallback)</option>
-              </select>
-            </label>
-          </div>
-
-          <div id="elevenBox" style="display:block">
+          <div id="elevenBox">
             <label>ElevenLabs API Key
-              <input id="elevenApiKey" type="text" placeholder="paste your key here" />
+              <input id="elevenApiKey" class="input" placeholder="paste API key"/>
             </label>
-            <label>Voice ID
-              <input id="elevenVoiceId" type="text" placeholder="e.g. 'alloy' or voice UUID" />
+            <label>ElevenLabs voice id
+              <input id="elevenVoiceId" class="input" placeholder="voice id or name"/>
             </label>
-            <div class="muted">Get an ElevenLabs API key & voice id. This page will fetch audio for each fact.</div>
-            <button id="fetchTTSBtn" class="btn">Fetch TTS for current facts</button>
+            <button id="fetchTTSBtn" class="btn">Fetch TTS for facts</button>
           </div>
 
-          <div class="row">
-            <label>Playback rate
-              <input id="playbackRate" type="range" min="0.7" max="1.4" step="0.05" value="1" />
-            </label>
-            <label><input id="embedTTS" type="checkbox" checked /> Embed fetched audio in export</label>
-          </div>
+          <label>Playback rate
+            <input id="playbackRate" type="range" min="0.7" max="1.4" step="0.05" value="1"/>
+          </label>
 
-          <div class="actions">
-            <button id="previewVoiceBtn" class="btn">Preview Voice Sync</button>
-            <button id="exportBtn" class="btn primary">Export .webm</button>
-          </div>
+          <label><input id="embedTTS" type="checkbox" checked/> Embed fetched audio into export</label>
 
-          <div class="muted small" style="margin-top:10px">
-            Tip: For reliable exported voice, paste a valid ElevenLabs key & voice id and click "Fetch TTS". If no key is provided, browser TTS will be used for preview only.
+          <hr/>
+
+          <button id="previewBtn" class="btn">Preview Captions & Voice</button>
+          <button id="randomFactsBtn" class="btn">Randomize Facts</button>
+
+          <div class="small muted" style="margin-top:10px">
+            Add MP4s to <code>assets/videos/</code> with names like <code>slime1.mp4</code> to use your own clips.
           </div>
         </div>
       </aside>
     </main>
 
-    <footer class="footer">© BrainRotter — facts mode</footer>
+    <footer class="footer">© BrainRotter</footer>
   </div>
 
   <script src="facts.js" defer></script>
