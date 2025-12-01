@@ -1,47 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>YT Short Generator — Final</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Short Generator</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="app">
-    <aside id="controls">
-      <h2>Short Controls</h2>
 
-      <label for="voicePreset">Voice preset</label>
-      <select id="voicePreset">
-        <option value="us_male">English (US) • Male</option>
-        <option value="uk_male">English (UK) • Male</option>
-      </select>
+  <div id="short-container">
+    <video id="bgVideo" autoplay muted playsinline></video>
 
-      <button id="generateBtn">Generate Short (prepare)</button>
-      <button id="playBtn" disabled>Play</button>
-      <button id="stopBtn" disabled>Stop</button>
-      <button id="downloadBtn" disabled>Download MP4</button>
-
-      <div id="status">Ready</div>
-    </aside>
-
-    <main id="preview">
-      <div id="short-frame">
-        <video id="previewVideo" muted playsinline></video>
-
-        <div id="captionBar" aria-live="polite">
-          <div id="captionText">Press Generate to prepare a Short</div>
-        </div>
-      </div>
-    </main>
+    <div id="captions">
+      <span id="captionText"></span>
+    </div>
   </div>
 
-  <!-- ffmpeg.wasm -->
-  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+  <div id="controls">
+    <button id="generateBtn">Generate</button>
+    <button id="playBtn" disabled>Play Short</button>
+    <select id="voiceSelect"></select>
+  </div>
 
-  <!-- facts must load first -->
+  <audio id="bgMusic" loop></audio>
+
+  <!-- Keep facts loaded BEFORE script -->
   <script src="facts.js"></script>
-
   <script src="script.js"></script>
+
 </body>
 </html>
