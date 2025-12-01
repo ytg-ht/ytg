@@ -1,123 +1,61 @@
-console.log("YT Shorts Generator Loaded");
+console.log("YT Short Generator - Playable version loaded");
 
-const video = document.getElementById("shortVideo");
-const captionText = document.getElementById("captionText");
-
+const video = document.getElementById("video");
 const generateBtn = document.getElementById("generateBtn");
 const playBtn = document.getElementById("playBtn");
-const downloadBtn = document.getElementById("downloadBtn");
-const voiceSelect = document.getElementById("voiceSelect");
+const factDisplay = document.getElementById("fact-display");
+const voiceChoice = document.getElementById("voiceChoice");
 
-if (!Array.isArray(facts) || facts.length < 7) {
-  alert("facts.js not found or too small!");
-  throw new Error("Missing facts");
+if (!facts || facts.length === 0) {
+    alert("⚠ facts.js missing or empty!");
 }
 
 const satisfyingVideos = [
-  "media/slime1.mp4",
-  "media/slime2.mp4",
-  "media/slime3.mp4",
-  "media/slime4.mp4",
-  "media/soap1.mp4"
+    "media/vid1.mp4",
+    "media/vid2.mp4",
+    "media/vid3.mp4"
 ];
 
-let chosenFacts = [];
-let currentFactIndex = 0;
-let speaking = false;
-let fullAudioChunks = [];
+let selectedFact = "";
 
-// Load available voices
-function loadVoices() {
-  const voices = speechSynthesis.getVoices();
-  voiceSelect.innerHTML = "";
-
-  voices.forEach(v => {
-    if (v.lang.startsWith("en-") && v.name.includes("Google")) {
-      const opt = document.createElement("option");
-      opt.value = v.name;
-      opt.textContent = `${v.name} (${v.lang})`;
-      voiceSelect.appendChild(opt);
-    }
-  });
+function getRandomFact() {
+    return facts[Math.floor(Math.random() * facts.length)];
 }
 
-// Random facts generator
-function pickFacts() {
-  chosenFacts = [];
-
-  while (chosenFacts.length < 7) {
-    const f = facts[Math.floor(Math.random() * facts.length)];
-    if (!chosenFacts.includes(f)) chosenFacts.push(f);
-  }
+function getRandomVideo() {
+    return satisfyingVideos[Math.floor(Math.random() * satisfyingVideos.length)];
 }
 
-// Random video & start time
-function loadRandomVideo() {
-  video.src = satisfyingVideos[Math.floor(Math.random() * satisfyingVideos.length)];
-  video.onloadedmetadata = () => {
-    const maxStart = Math.max(0, video.duration - 8);
-    video.currentTime = Math.random() * maxStart;
-  };
-  video.pause();
+async function generateAudio(text) {
+    return new Promise(resolve => {
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.voice = speechSynthesis.getVoices().find(v => v.name.includes(voiceChoice.value));
+        utter.rate = 1.05;
+        utter.onend = resolve;
+        speechSynthesis.speak(utter);
+    });
 }
 
-function speakFact(index) {
-  return new Promise(resolve => {
-    const text = chosenFacts[index];
-    captionText.textContent = text;
+generateBtn.addEventListener("click", () => {
+    selectedFact = getRandomFact();
+    factDisplay.textContent = selectedFact;
 
-    const msg = new SpeechSynthesisUtterance(text);
-    msg.voice = speechSynthesis.getVoices().find(v => v.name === voiceSelect.value);
-    msg.rate = 1.02;
-    
-    msg.onend = () => setTimeout(resolve, 400); // short pause after each fact
+    const videoSrc = getRandomVideo();
+    video.src = videoSrc;
 
-    speechSynthesis.speak(msg);
-  });
-}
+    // Random start point
+    video.currentTime = Math.random() * 5;
 
-async function playShort() {
-  playBtn.disabled = true;
-  downloadBtn.disabled = true;
-  generateBtn.disabled = true;
+    playBtn.disabled = false;
+});
 
-  video.play();
-  speaking = true;
+playBtn.addEventListener("click", async () => {
+    playBtn.disabled = true;
 
-  for (let i = 0; i < chosenFacts.length; i++) {
-    currentFactIndex = i;
-    await speakFact(i);
-  }
+    video.muted = false;
+    video.play();
 
-  speaking = false;
-  captionText.textContent = "✔ Done!";
-  video.pause();
+    await generateAudio(selectedFact + " . . . ");
 
-  playBtn.disabled = false;
-  downloadBtn.disabled = false;
-  generateBtn.disabled = false;
-}
-
-generateBtn.onclick = () => {
-  pickFacts();
-  currentFactIndex = 0;
-  loadRandomVideo();
-  captionText.textContent = "Click Play to watch!";
-  playBtn.disabled = false;
-  downloadBtn.disabled = true;
-};
-
-playBtn.onclick = () => {
-  if (speaking) {
-    speechSynthesis.cancel();
     video.pause();
-    speaking = false;
-    playBtn.textContent = "Play";
-  } else {
-    playBtn.textContent = "Pause";
-    playShort();
-  }
-};
-
-speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices();
+});
