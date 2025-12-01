@@ -1,43 +1,31 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YT Short Generator</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="page">
-    <div id="center-area">
-      <!-- Short preview (phone-shaped) -->
-      <div id="short-preview">
-        <video id="topVideo" muted playsinline></video>
-        <div id="captionBox"><div id="captionText">Press Generate to create a Short</div></div>
-      </div>
 
-      <!-- Controls -->
-      <div id="controls">
-        <label for="voiceSelect">Voice</label>
-        <select id="voiceSelect">
-          <option value="google-us">English (US)</option>
-          <option value="google-uk-male">English (UK) Male</option>
-        </select>
+  <div id="controls">
+    <label for="voiceSelect">Voice:</label>
+    <select id="voiceSelect">
+      <option value="Google US English">English US</option>
+      <option value="Google UK English Male">English UK Male</option>
+    </select>
 
-        <button id="generateBtn">Generate & Export MP4</button>
-        <button id="downloadBtn" disabled>Download MP4</button>
-
-        <div id="status">Ready</div>
-      </div>
-    </div>
+    <button id="generateBtn">Generate Short</button>
+    <button id="downloadBtn" disabled>Download Short</button>
   </div>
 
-  <!-- load facts first -->
-  <script src="/ytg/facts.js"></script>
+  <div id="short-preview">
+    <video id="bgVideo" muted loop playsinline></video>
+    <div id="captionBox"><p id="captionText"></p></div>
+  </div>
 
-  <!-- ffmpeg.wasm for mp4 conversion -->
-  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+  <script src="facts.js"></script>
+  <script src="script.js"></script>
 
-  <!-- main logic -->
-  <script src="/ytg/script.js"></script>
 </body>
 </html>
