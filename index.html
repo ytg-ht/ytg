@@ -1,31 +1,39 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YT Short Generator</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>YT Short Generator — Playable</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div id="app">
+    <div id="left-controls">
+      <label for="voiceSelect">Voice</label>
+      <select id="voiceSelect"></select>
 
-  <div id="controls">
-    <label for="voiceSelect">Voice:</label>
-    <select id="voiceSelect">
-      <option value="Google US English">English US</option>
-      <option value="Google UK English Male">English UK Male</option>
-    </select>
+      <button id="generateBtn">Generate Short</button>
+      <button id="playBtn" disabled>Play</button>
+      <button id="stopBtn" disabled>Stop</button>
 
-    <button id="generateBtn">Generate Short</button>
-    <button id="downloadBtn" disabled>Download Short</button>
+      <div id="status">Ready</div>
+    </div>
+
+    <div id="preview">
+      <div id="short-frame">
+        <video id="bgVideo" muted playsinline></video>
+
+        <!-- caption area: we use two lanes to slide text up -->
+        <div id="caption-area">
+          <div class="caption-lane" id="laneA"></div>
+          <div class="caption-lane" id="laneB"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div id="short-preview">
-    <video id="bgVideo" muted loop playsinline></video>
-    <div id="captionBox"><p id="captionText"></p></div>
-  </div>
-
-  <script src="facts.js"></script>
-  <script src="script.js"></script>
-
+  <!-- facts must load first -->
+  <script src="/ytg/facts.js"></script>
+  <script src="/ytg/script.js"></script>
 </body>
 </html>
