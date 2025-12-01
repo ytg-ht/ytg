@@ -8,25 +8,18 @@
 </head>
 <body>
 
-  <div id="video-container">
-    <video id="slimeVideo" autoplay loop muted playsinline></video>
-  </div>
+  <video id="bgVideo" autoplay loop muted playsinline></video>
 
-  <div id="text-container">
-    <p id="fact-text">Loading...</p>
+  <div id="text-box">
+    <p id="factText">Loading...</p>
   </div>
 
   <div id="controls">
-    <label>Voice:</label>
-    <select id="voiceSelect">
-      <option value="Google US English">Google US English</option>
-      <option value="Google UK English Male">Google UK English Male</option>
-    </select>
-
+    <label for="voiceSelect">Voice:</label>
+    <select id="voiceSelect"></select>
     <button id="nextBtn">Next Fact</button>
   </div>
 
-  <!-- IMPORTANT: facts must load BEFORE script.js -->
   <script src="facts.js"></script>
   <script src="script.js"></script>
 </body>
