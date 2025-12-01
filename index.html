@@ -1,32 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube Short Generator</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YT Shorts Generator</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div id="short-container">
-    <video id="bgVideo" autoplay muted playsinline></video>
+<div id="short-container">
+    <video id="shortVideo" muted playsinline></video>
 
     <div id="captions">
-      <span id="captionText"></span>
+        <p id="captionText"></p>
     </div>
-  </div>
+</div>
 
-  <div id="controls">
-    <button id="generateBtn">Generate</button>
-    <button id="playBtn" disabled>Play Short</button>
-    <select id="voiceSelect"></select>
-  </div>
+<button id="generate">Generate Short</button>
+<button id="downloadBtn" style="display:none;">Download</button>
 
-  <audio id="bgMusic" loop></audio>
+<audio id="bgMusic" loop></audio>
 
-  <!-- Keep facts loaded BEFORE script -->
-  <script src="facts.js"></script>
-  <script src="script.js"></script>
-
+<script src="facts.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
