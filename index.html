@@ -1,31 +1,25 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Shorts Generator</title>
+    <title>YT Shorts Generator</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <h1>YouTube Shorts Generator</h1>
 
-    <div class="app-container">
-        <h1>YouTube Shorts Generator</h1>
+    <button id="generateBtn">Generate Short</button>
 
-        <input type="text" id="videoUrl" placeholder="Paste YouTube URL (embed or watch)">
-        <button id="generateBtn">Generate Short 🎬</button>
+    <div class="short-container">
+        <iframe id="videoFrame" allow="autoplay"></iframe>
 
-        <div class="short-container">
-            <iframe id="videoFrame" allow="autoplay"></iframe>
-
-            <div id="factBox">
-                <p id="factText">Click Generate to Start!</p>
-                <button id="playBtn">Play ▶</button>
-            </div>
+        <div id="factBox">
+            <p id="factText">Click Generate!</p>
+            <button id="playBtn">▶ Play</button>
         </div>
     </div>
 
     <script src="facts.js"></script>
     <script src="script.js"></script>
-
 </body>
 </html>
