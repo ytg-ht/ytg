@@ -1,28 +1,40 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RenderOne Shorts Generator</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>YT Short Generator — MP4 Export</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div id="page">
+    <div id="center-area">
+      <div id="short-preview">
+        <video id="topVideo" muted playsinline></video>
+        <div id="captionBox"><div id="captionText">Press Generate to create a Short</div></div>
+      </div>
 
-  <div id="video-container">
-    <video id="slimeVideo" autoplay muted playsinline></video>
+      <div id="controls">
+        <label for="voiceSelect">Voice</label>
+        <select id="voiceSelect">
+          <option value="google-us">English (US)</option>
+          <option value="google-uk-male">English (UK) Male</option>
+        </select>
+
+        <button id="generateBtn">Generate & Export MP4</button>
+        <button id="downloadBtn" disabled>Download MP4</button>
+
+        <div id="status">Ready</div>
+      </div>
+    </div>
   </div>
 
-  <div id="text-container">
-    <p id="fact-text">Loading...</p>
-  </div>
-
-  <div id="controls">
-    <label>Voice:</label>
-    <select id="voiceSelect"></select>
-    <button id="nextBtn">Next Fact</button>
-  </div>
-
+  <!-- facts must load first -->
   <script src="facts.js"></script>
+
+  <!-- ffmpeg.wasm - convert webm -> mp4 in-browser -->
+  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+
   <script src="script.js"></script>
 </body>
 </html>
