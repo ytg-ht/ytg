@@ -3,45 +3,57 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shorts Generator — Demo</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Shorts Generator</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="app">
     <aside class="sidebar">
       <h2>Controls</h2>
 
-      <label>Facts per video
+      <label class="row">
+        <span>Facts per video</span>
         <input id="factsCount" type="range" min="1" max="15" value="7">
         <span id="factsCountVal">7</span>
       </label>
 
-      <label>Words per chunk
+      <label class="row">
+        <span>Words per chunk</span>
         <input id="wordsPerChunk" type="number" min="2" max="8" value="5">
       </label>
 
-      <label>Pacing (ms per chunk)
+      <label class="row">
+        <span>Pacing (ms / chunk)</span>
         <input id="chunkMs" type="number" min="300" max="3000" value="900">
       </label>
 
-      <button id="generateBtn">Generate & Play</button>
-      <button id="nextVideoBtn">Next Clip Now</button>
+      <div class="buttons">
+        <button id="generateBtn">Generate & Play</button>
+        <button id="nextVideoBtn">Next Clip Now</button>
+      </div>
 
       <hr>
 
-      <label>Choose voice (English only)</label>
-      <select id="voiceSelect"></select>
-      <button id="previewVoice">Preview Voice</button>
+      <label class="row">
+        <span>Choose voice (English)</span>
+        <select id="voiceSelect"></select>
+      </label>
+      <div class="buttons">
+        <button id="previewVoice">Preview Voice</button>
+      </div>
 
       <hr>
-      <button id="downloadVisual">Download Visual (WebM)</button>
 
-      <p class="muted small">Videos hosted in media/ (1080×1920 recommended). Captions use style A3 (rounded black bubble).</p>
+      <div class="buttons">
+        <button id="downloadVisual">Download Visual (WebM)</button>
+      </div>
+
+      <p class="muted small">Videos: put in <code>/media/</code>. Recommended size: <strong>1080×1920</strong> for YouTube Shorts.</p>
     </aside>
 
     <main class="content">
       <div class="videoWrap">
-        <div class="videoCanvasWrap">
+        <div class="videoCanvasWrap" id="canvasWrap">
           <video id="satisfy-video" playsinline muted crossorigin="anonymous"></video>
           <div id="captionOverlay" class="captionBubble">Loading…</div>
         </div>
@@ -49,7 +61,7 @@
     </main>
   </div>
 
-  <!-- facts.js (must define const facts = [ ... ]) -->
+  <!-- facts.js must be loaded before script.js -->
   <script src="facts.js" defer></script>
   <script src="script.js" defer></script>
 </body>
