@@ -1,113 +1,97 @@
-console.log("Short Generator Loaded ✔");
-
-// Elements
-const video = document.getElementById("bgVideo");
-const captionText = document.getElementById("captionText");
+const btn = document.getElementById("generate");
+const video = document.getElementById("shortVideo");
+const captions = document.getElementById("captionText");
 const bgMusic = document.getElementById("bgMusic");
-const generateBtn = document.getElementById("generateBtn");
-const playBtn = document.getElementById("playBtn");
-const voiceSelect = document.getElementById("voiceSelect");
+const downloadBtn = document.getElementById("downloadBtn");
 
-// Your videos
-const videos = [
-  "media/slime1.mp4",
-  "media/slime2.mp4",
-  "media/slime3.mp4",
-  "media/slime4.mp4",
-  "media/soap1.mp4"
-];
+let index = 0;
+let capturing = false;
+let chunks = [];
+let recorder;
 
-if (!window.facts || window.facts.length < 7) {
-  alert("⚠ facts.js missing or too short!");
-  throw new Error("facts not found");
+bgMusic.src = "audio/bg.mp3";
+
+btn.addEventListener("click", startShort);
+
+async function startShort() {
+    btn.style.display = "none";
+    downloadBtn.style.display = "none";
+
+    const fact = window.facts[Math.floor(Math.random() * window.facts.length)];
+    
+    const phrases = splitFact(fact);
+    let phraseIndex = 0;
+
+    startRecording();
+
+    function playNextVideo() {
+        const nextVid = `videos/vid${(index % 3) + 1}.mp4`;
+        index++;
+
+        video.style.opacity = 0;
+        setTimeout(() => {
+            video.src = nextVid;
+            video.play();
+            video.style.opacity = 1;
+        }, 300);
+    }
+
+    playNextVideo();
+    bgMusic.play();
+
+    const interval = setInterval(() => {
+        captions.textContent = phrases[phraseIndex];
+        phraseIndex++;
+
+        if (phraseIndex % 2 === 0) playNextVideo(); // swap every 10s (2 captions)
+
+        if (phraseIndex >= phrases.length) {
+            clearInterval(interval);
+            setTimeout(stopRecording, 3000);
+        }
+    }, 5000); // 5s per caption
 }
 
-let shortFacts = [];
-let currentFact = 0;
-let currentVideo = 0;
-let playing = false;
+function splitFact(fact) {
+    const words = fact.split(" ");
+    let result = [];
 
-// Populate voices after load
-speechSynthesis.onvoiceschanged = () => {
-  voiceSelect.innerHTML = "";
-  speechSynthesis.getVoices().forEach(v => {
-    if (v.lang.startsWith("en")) {
-      let opt = document.createElement("option");
-      opt.value = v.name;
-      opt.textContent = v.name;
-      voiceSelect.appendChild(opt);
+    for (let i = 0; i < words.length; i += 5) {
+        result.push(words.slice(i, i + 5).join(" "));
     }
-  });
-};
 
-// Split caption into bigger chunks (7 words)
-function chunkText(text, size = 7) {
-  const words = text.split(" ");
-  const out = [];
-  for (let i = 0; i < words.length; i += size) {
-    out.push(words.slice(i, i + size).join(" "));
-  }
-  return out;
+    return result;
 }
 
-// Generate new short
-generateBtn.onclick = () => {
-  shortFacts = [];
-  const used = new Set();
-  while (shortFacts.length < 7) {
-    const i = Math.floor(Math.random() * facts.length);
-    if (!used.has(i)) {
-      used.add(i);
-      shortFacts.push(chunkText(facts[i]));
+function startRecording() {
+    const stream = document.getElementById("short-container").captureStream(30);
+    recorder = new MediaRecorder(stream);
+    chunks = [];
+
+    recorder.ondataavailable = e => chunks.push(e.data);
+    recorder.onstop = downloadVideo;
+
+    recorder.start();
+    capturing = true;
+}
+
+function stopRecording() {
+    if (capturing) {
+        capturing = false;
+        recorder.stop();
+        bgMusic.pause();
     }
-  }
-  currentFact = 0;
-  currentVideo = 0;
-  captionText.textContent = "Ready!";
-  playBtn.disabled = false;
-};
+}
 
-// Play generated short
-playBtn.onclick = () => {
-  if (!shortFacts.length) return;
-  playing = true;
-  currentFact = 0;
-  currentVideo = 0;
-  bgMusic.src = "media/music.mp3"; // You add this file
-  bgMusic.play();
-  playNext();
-};
+function downloadVideo() {
+    const blob = new Blob(chunks, { type: "video/mp4" });
+    const url = URL.createObjectURL(blob);
 
-// Show next fact + switch video
-function playNext() {
-  if (!playing || currentFact >= shortFacts.length) {
-    playing = false;
-    bgMusic.pause();
-    return;
-  }
-
-  const captionParts = shortFacts[currentFact];
-  let partIndex = 0;
-
-  // Switch video smoothly
-  video.style.opacity = 0;
-  setTimeout(() => {
-    currentVideo = (currentVideo + 1) % videos.length;
-    video.src = videos[currentVideo];
-    video.play();
-    video.style.opacity = 1;
-  }, 200);
-
-  // Show next chunk of words every 2 seconds
-  const interval = setInterval(() => {
-    captionText.textContent = captionParts[partIndex];
-    partIndex++;
-
-    if (partIndex >= captionParts.length) {
-      clearInterval(interval);
-      currentFact++;
-      setTimeout(playNext, 2000);
-    }
-
-  }, 2000);
+    downloadBtn.style.display = "block";
+    downloadBtn.onclick = () => {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "short.mp4";
+        a.click();
+    };
 }
