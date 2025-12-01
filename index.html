@@ -1,206 +1,178 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Short Generator</title>
-
+<title>YouTube Short Generator</title>
 <style>
     body {
-        background:black;
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        font-family:Arial, sans-serif;
+        margin: 0;
+        background: black;
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
     }
-
-    #short-container {
-        width:360px;
-        height:640px;
-        position:relative;
-        overflow:hidden;
-        background:black;
+    #container {
+        width: 400px;
+        height: 700px;
+        background: #000;
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
     }
-
     video {
-        width:100%;
-        height:60%;
-        object-fit:cover;
-        position:absolute;
-        top:0;
-        left:0;
-        opacity:0;
-        transition:opacity .6s;
+        width: 100%;
+        height: 60%;
+        object-fit: cover;
+        position: absolute;
+        top: 0;
+        opacity: 1;
+        transition: opacity 0.4s ease;
     }
-
-    #captions {
-        position:absolute;
-        bottom:0;
-        width:100%;
-        height:40%;
-        background:white;
-        display:flex;
-        justify-content:center;
-        align-items:center;
+    #factDisplay {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 40%;
+        background: #000;
+        color: #fff;
+        text-align: center;
+        font-size: 32px;
+        font-weight: bold;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+        line-height: 1.2;
     }
-
-    #captionText {
-        width:92%;
-        font-size:32px;
-        font-weight:bold;
-        color:black;
-        text-align:center;
-        line-height:1.1em;
-        padding-bottom:10px;
+    #controls {
+        position: absolute;
+        top: 85%;
+        width: 100%;
+        display: flex;
+        justify-content: space-around;
     }
-
     button {
-        margin-top:14px;
-        padding:12px 22px;
-        font-size:20px;
-        border:none;
-        border-radius:12px;
-        background:#007aff;
-        color:white;
-        cursor:pointer;
+        background: red;
+        color: white;
+        border: none;
+        padding: 12px 18px;
+        font-size: 18px;
+        border-radius: 10px;
+        cursor: pointer;
     }
 </style>
 </head>
-
 <body>
 
-<!-- VIDEO + CAPTION AREA -->
-<div id="short-container">
-    <video id="videoA" muted playsinline></video>
-    <video id="videoB" muted playsinline></video>
-    <div id="captions"><p id="captionText"></p></div>
+<div id="container">
+    <video id="videoA" playsinline></video>
+    <video id="videoB" playsinline></video>
+    <div id="factDisplay"></div>
+    <div id="controls">
+        <button id="genBtn">Generate</button>
+        <button id="dlBtn">Download</button>
+    </div>
 </div>
 
-<!-- BUTTONS -->
-<button id="generate">Generate Short</button>
-<button id="downloadBtn" style="display:none;">Download</button>
-
+<script src="facts.js"></script>
 <script>
-/* 🔹 YOUR FACTS GO HERE — must be at least length 7 🔹 */
-window.facts = [
-    "Did you know your nose can remember 50,000 different smells?",
-    "Did you know your heart beats around 100,000 times per day?",
-    "Did you know a day on Venus is longer than a year on Venus?",
-    "Did you know honey never spoils?",
-    "Did you know octopuses have three hearts?",
-    "Did you know bananas are berries, but strawberries aren’t?",
-    "Did you know the Eiffel Tower can be 6 inches taller in summer?"
+const videoSources = [
+    "media/slime1.mp4",
+    "media/slime2.mp4",
+    "media/slime3.mp4",
+    "media/slime4.mp4",
+    "media/soap1.mp4"
 ];
 
-/* 🔹 You can add more satisfying videos in this folder 🔹 */
-const videos = [
-    "videos/1.mp4",
-    "videos/2.mp4",
-    "videos/3.mp4"
-];
+const vidA = document.getElementById("videoA");
+const vidB = document.getElementById("videoB");
+const factDisplay = document.getElementById("factDisplay");
+const genBtn = document.getElementById("genBtn");
+const dlBtn = document.getElementById("dlBtn");
 
-const generateBtn = document.getElementById("generate");
-const downloadBtn = document.getElementById("downloadBtn");
-const vA = document.getElementById("videoA");
-const vB = document.getElementById("videoB");
+let currentVid = vidA;
+let nextVid = vidB;
+let stream;
+let recorder;
+let recordedChunks = [];
+let active = false;
 
-let active = vA;
-let buffer = vB;
-
-// Recording
-let stream, recorder, chunks = [];
-const captions = document.getElementById("captionText");
-
-function splitFact(fact) {
-    const words = fact.split(" ");
-    const result = [];
-    while(words.length) result.push(words.splice(0, 5).join(" "));
-    return result;
-}
-
-generateBtn.onclick = start;
-
-function start() {
-    if(window.facts.length < 7) {
-        alert("Add more facts");
-        return;
-    }
-
-    generateBtn.style.display = "none";
-    downloadBtn.style.display = "none";
-
-    const fact = window.facts[Math.floor(Math.random()*window.facts.length)];
-    const parts = splitFact(fact);
-
-    // Start TTS only after click (bypass autoplay block)
-    let utter = new SpeechSynthesisUtterance(fact);
+function speak(text) {
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 1.05;
+    utter.pitch = 1.0;
+    speechSynthesis.cancel();
     speechSynthesis.speak(utter);
-
-    stream = document.getElementById("short-container").captureStream(30);
-    startRecording();
-
-    let vidIndex = 0;
-    playVideo(vA, videos[vidIndex]);
-
-    let i = 0;
-    captions.textContent = parts[i];
-
-    const interval = setInterval(() => {
-        i++;
-        if(i < parts.length) {
-            captions.textContent = parts[i];
-        }
-
-        if(i % 2 === 0) {
-            vidIndex = (vidIndex + 1) % videos.length;
-            fadeVideos(videos[vidIndex]);
-        }
-
-        if(i >= parts.length) {
-            clearInterval(interval);
-            setTimeout(stopRecording, 2000);
-        }
-    }, 5000);
 }
 
-function fadeVideos(nextSrc) {
-    buffer.src = nextSrc;
-    buffer.play();
-    buffer.style.opacity = 1;
-    active.style.opacity = 0;
-    [active, buffer] = [buffer, active];
+function getRandom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function playVideo(el, src) {
-    el.src = src;
-    el.style.opacity = 1;
-    el.play();
+function swapVideos() {
+    currentVid.style.opacity = 0;
+    nextVid.style.opacity = 1;
+    [currentVid, nextVid] = [nextVid, currentVid];
 }
 
-function startRecording() {
-    recorder = new MediaRecorder(stream, { mimeType:"video/webm" });
-    recorder.ondataavailable = e => chunks.push(e.data);
-    recorder.onstop = downloadVideo;
-    chunks = [];
-    recorder.start();
+async function playClip() {
+    if (!active) return;
+    const fact = getRandom(facts);
+    const src = getRandom(videoSources);
+
+    nextVid.src = src;
+    factDisplay.textContent = fact;
+    speak(fact);
+
+    await nextVid.play();
+
+    swapVideos();
+
+    setTimeout(() => {
+        playClip(); // loop every 10s
+    }, 10000);
 }
 
-function stopRecording() {
-    recorder.stop();
+function startShort() {
+    active = true;
+    playClip();
 }
 
-function downloadVideo() {
-    const blob = new Blob(chunks, { type:"video/webm" });
-    const url = URL.createObjectURL(blob);
-    downloadBtn.style.display = "block";
+genBtn.addEventListener('click', startShort);
 
-    downloadBtn.onclick = () => {
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "short.webm";
-        a.click();
-    };
-}
+// ---- RECORDING / DOWNLOAD ----
+dlBtn.addEventListener('click', async () => {
+    if (!stream) {
+        stream = document.getElementById("container").captureStream(30);
+        recorder = new MediaRecorder(stream);
+
+        recorder.ondataavailable = e => recordedChunks.push(e.data);
+        recorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: "video/mp4" });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "short.mp4";
+            a.click();
+
+            recordedChunks = [];
+        };
+
+        recorder.start();
+        dlBtn.textContent = "Stop + Save";
+        speak("Recording started");
+    } else {
+        recorder.stop();
+        stream = null;
+        dlBtn.textContent = "Download";
+        speak("Recording stopped");
+    }
+});
 </script>
 
 </body>
