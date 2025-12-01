@@ -1,60 +1,34 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html,body,#app { height: 100%; background: #000; color: #fff; font-family: Arial, Helvetica, sans-serif; }
+
+#canvas {
+  display: block;
+  margin: 0 auto;
+  background: #111;
+  width: 360px; /* small on desktop but canvas internal is 720x1280 for sharpness */
+  height: 640px;
+  border-radius: 12px;
+  box-shadow: 0 6px 30px rgba(0,0,0,0.7);
 }
 
-body {
-  background: black;
-  color: white;
-  height: 100vh;
-  overflow: hidden;
-  font-family: Arial, sans-serif;
-}
+/* UI below canvas */
+#ui { width: 360px; margin: 16px auto; text-align: center; }
+#controls-top { display:flex; gap:8px; justify-content:center; align-items:center; margin-bottom:8px; flex-wrap:wrap;}
+select, button { padding:8px 12px; border-radius:8px; border:none; font-weight:600; cursor:pointer; }
+button { background: #fff; color: #000; }
+select { background: #222; color: #fff; }
 
-/* fullscreen video */
-#bgVideo {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
-  transform: translate(-50%, -50%);
-  z-index: -1;
-}
+#status { margin: 8px 0; font-size: 14px; color: #ddd; }
+.hint { margin-top:10px; font-size:12px; color:#9aa; }
 
-/* text overlay styling */
-#text-box {
-  position: absolute;
-  bottom: 25%;
-  width: 100%;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.45);
-  padding: 20px;
-}
-
-#factText {
-  font-size: 32px;
-  font-weight: bold;
-}
-
-/* controls */
-#controls {
-  position: absolute;
-  bottom: 5%;
-  width: 100%;
-  text-align: center;
-}
-
-button, select {
-  font-size: 18px;
-  padding: 12px 22px;
-  margin: 5px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  background: white;
-  color: black;
-  font-weight: bold;
+/* download link */
+#downloads a {
+  display:inline-block;
+  margin-top:8px;
+  padding:8px 12px;
+  background:#22c55e;
+  color:#012;
+  border-radius:8px;
+  font-weight:700;
+  text-decoration:none;
 }
