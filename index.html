@@ -3,48 +3,41 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>YT Short Generator — MP4 Export</title>
+  <title>YT Short Generator</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div id="page">
+    <div id="center-area">
+      <!-- Short preview (phone-shaped) -->
+      <div id="short-preview">
+        <video id="topVideo" muted playsinline></video>
+        <div id="captionBox"><div id="captionText">Press Generate to create a Short</div></div>
+      </div>
 
-  <div id="layout">
-    
-    <!-- LEFT CONTROLS -->
-    <div id="controls">
-      <label for="voiceSelect">Voice:</label>
-      <select id="voiceSelect">
-        <option value="google-us">English US</option>
-        <option value="google-uk-male">English UK Male</option>
-      </select>
+      <!-- Controls -->
+      <div id="controls">
+        <label for="voiceSelect">Voice</label>
+        <select id="voiceSelect">
+          <option value="google-us">English (US)</option>
+          <option value="google-uk-male">English (UK) Male</option>
+        </select>
 
-      <button id="generateBtn">🎬 Generate Short</button>
-      <button id="downloadBtn" disabled>⬇ Download</button>
+        <button id="generateBtn">Generate & Export MP4</button>
+        <button id="downloadBtn" disabled>Download MP4</button>
 
-      <p id="status">Ready</p>
-    </div>
-
-    <!-- CENTER: SHORT PREVIEW -->
-    <div id="short-preview">
-      <div id="short-box">
-
-        <!-- Video area -->
-        <video id="topVideo" autoplay muted playsinline></video>
-
-        <!-- Captions -->
-        <div id="captions">
-          <p id="captionText">Press Generate</p>
-        </div>
-
+        <div id="status">Ready</div>
       </div>
     </div>
-
   </div>
 
-  <!-- Scripts MUST be in this order -->
+  <!-- load facts first -->
   <script src="facts.js"></script>
-  <script src="script.js"></script>
+
+  <!-- ffmpeg.wasm for mp4 conversion -->
   <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
 
+  <!-- main logic -->
+  <script src="script.js"></script>
 </body>
 </html>
