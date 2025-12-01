@@ -197,8 +197,7 @@ const facts = [
 "Did you know some lizards can shoot blood from their eyes?",
 "Did you know dragonflies can hover like helicopters?",
 "Did you know bats are the only mammals that can fly?",
-"Did you know honeybees sometimes dance to share food locations?"
-  // --- HUMAN BODY ---
+"Did you know honeybees sometimes dance to share food locations?",
   "Did you know humans are the only animals that blush?",
   "Did you know your brain uses about 20% of the calories you eat?",
   "Did you know humans actually glow, but the light is too weak to see?",
@@ -229,8 +228,6 @@ const facts = [
   "Did you know humans are the only animals that cry emotionally?",
   "Did you know you will walk around the Earth 5 times in your life?",
   "Did you know your heartbeat syncs with music you listen to?",
-
-  // --- ANIMALS ---
   "Did you know a group of flamingos is called a flamboyance?",
   "Did you know octopuses have three hearts?",
   "Did you know cows have best friends?",
