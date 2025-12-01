@@ -1,60 +1,53 @@
 body {
-  margin: 0;
-  background: #000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #000;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
 }
 
 #short-container {
-  width: 360px;
-  height: 640px;
-  position: relative;
-  background: #000;
-  overflow: hidden;
-  border-radius: 12px;
+    width: 360px;
+    height: 640px;
+    background: #000;
+    position: relative;
+    overflow: hidden;
 }
 
-video {
-  position: absolute;
-  width: 100%;
-  height: 60%;
-  top: 0;
-  object-fit: cover;
+#shortVideo {
+    width: 100%;
+    height: 60%;
+    object-fit: cover;
+    transition: opacity 0.7s;
 }
 
 #captions {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 40%;
-  background: rgba(0,0,0,1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
-  text-align: center;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 40%;
+    background-color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #captionText {
-  font-size: 24px;
-  font-weight: bold;
-  color: #fff;
-  line-height: 1.2;
+    width: 90%;
+    font-size: 24px;
+    font-weight: bold;
+    color: black;
+    text-align: center;
 }
 
-#controls {
-  margin-top: 12px;
-  display: flex;
-  gap: 10px;
-}
-button, select {
-  padding: 10px 15px;
-  font-size: 16px;
-  cursor: pointer;
-  border-radius: 6px;
-  border: none;
+button {
+    margin-top: 12px;
+    padding: 12px 20px;
+    font-size: 18px;
+    border-radius: 10px;
+    border: none;
+    background: #00aaFF;
+    color: white;
+    cursor: pointer;
 }
