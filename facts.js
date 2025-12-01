@@ -882,5 +882,5 @@ const facts = [
   "Did you know pigs can use mirrors?",
   "Did you know peanuts are used to make dynamite?",
   "Did you know tiny tardigrades can survive outer space?",
-  "Did you know even penguins have knees?",
+  "Did you know even penguins have knees?"
 ];
