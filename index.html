@@ -1,39 +1,35 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>YT Short Generator — Playable</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YT Shorts Generator</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="app">
-    <div id="left-controls">
-      <label for="voiceSelect">Voice</label>
-      <select id="voiceSelect"></select>
 
-      <button id="generateBtn">Generate Short</button>
-      <button id="playBtn" disabled>Play</button>
-      <button id="stopBtn" disabled>Stop</button>
+  <div id="controls">
+    <button id="generateBtn">Generate Short</button>
+    <button id="playBtn" disabled>Play</button>
 
-      <div id="status">Ready</div>
-    </div>
+    <label for="voiceSelect">Voice:</label>
+    <select id="voiceSelect"></select>
 
-    <div id="preview">
-      <div id="short-frame">
-        <video id="bgVideo" muted playsinline></video>
+    <button id="downloadBtn" disabled>Download</button>
+  </div>
 
-        <!-- caption area: we use two lanes to slide text up -->
-        <div id="caption-area">
-          <div class="caption-lane" id="laneA"></div>
-          <div class="caption-lane" id="laneB"></div>
-        </div>
+  <div id="preview-area">
+    <div id="shortBox">
+      <video id="shortVideo" muted playsinline></video>
+      <div id="captionBar">
+        <p id="captionText">Press Generate to start</p>
       </div>
     </div>
   </div>
 
-  <!-- facts must load first -->
-  <script src="/ytg/facts.js"></script>
-  <script src="/ytg/script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+  <script src="facts.js"></script>
+  <script src="script.js"></script>
+
 </body>
 </html>
