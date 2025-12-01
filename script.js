@@ -1,14 +1,14 @@
-/* script.js — FULL replacement
+/* script.js — final working generator (one Short per press)
    Requirements:
-   - facts.js must define `facts` array
+   - facts.js must define `const facts = [ "...", ... ];`
    - media files under /media/
-   - index.html includes ffmpeg.wasm via:
-     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+   - Use Chrome/Edge desktop and when requested choose "This tab" + "Share audio"
 */
 
-console.log("YT Short generator (fixed generate) loaded");
+console.log("YT Short generator (final) loaded");
 
 window.addEventListener("load", async () => {
+  // sanity check: facts.js present
   if (!window.facts || !Array.isArray(facts) || facts.length === 0) {
     alert("facts.js missing or empty. Add your facts array before script.js");
     throw new Error("Missing facts");
@@ -24,7 +24,7 @@ window.addEventListener("load", async () => {
     "media/soap1.mp4"
   ];
   const FACTS_PER_SHORT = 7;
-  const CHUNK_WORDS = 5;        // auto-split every 5 words
+  const CHUNK_WORDS = 5;        // captions split into 5-word chunks
   const MIN_CHUNK_MS = 650;     // minimum ms per chunk
   const VIDEO_SWITCH_MIN = 1500;
   const VIDEO_SWITCH_MAX = 3000;
@@ -41,7 +41,6 @@ window.addEventListener("load", async () => {
   let browserVoices = [];
   function refreshVoices() {
     browserVoices = speechSynthesis.getVoices();
-    // find best match for US and UK male
     const us = browserVoices.find(v => /en-?us/i.test(v.lang) || /google us english/i.test(v.name));
     const ukMale = browserVoices.find(v => (/en-?gb|en-?uk/i.test(v.lang) && /male/i.test(v.name)) || /google uk english male/i.test(v.name));
     const fallbackUs = browserVoices.find(v => /en/i.test(v.lang)) || browserVoices[0];
@@ -52,7 +51,7 @@ window.addEventListener("load", async () => {
   speechSynthesis.onvoiceschanged = refreshVoices;
   refreshVoices();
 
-  // ---------- utilities ----------
+  // ---------- helpers ----------
   function fullUrl(p) {
     if (/^https?:\/\//.test(p)) return p;
     return BASE + p.replace(/^\//, "");
@@ -91,14 +90,14 @@ window.addEventListener("load", async () => {
       const name = which === "uk" ? voiceSelect.dataset.uk : voiceSelect.dataset.us;
       const v = speechSynthesis.getVoices().find(x => x.name === name);
       if (v) u.voice = v;
+      u.rate = 1.0;
       u.onend = () => resolve();
       u.onerror = () => resolve();
-      u.rate = 1.0;
       speechSynthesis.speak(u);
     });
   }
 
-  // ---------- offscreen canvas rendering ----------
+  // ---------- offscreen canvas for clean capture ----------
   const OUT_W = 720, OUT_H = 1280;
   const offCanvas = document.createElement("canvas");
   offCanvas.width = OUT_W;
@@ -106,9 +105,7 @@ window.addEventListener("load", async () => {
   const octx = offCanvas.getContext("2d");
 
   let drawId = 0;
-  let getCurrentCaption = () => captionText.textContent;
-
-  function startDrawLoop() {
+  function startDrawLoop(getCaption) {
     if (drawId) cancelAnimationFrame(drawId);
     function loop() {
       octx.clearRect(0,0,OUT_W,OUT_H);
@@ -123,7 +120,7 @@ window.addEventListener("load", async () => {
         octx.fillRect(0,0,OUT_W,OUT_H);
       }
 
-      // caption overlay (bottom)
+      // caption overlay
       const captionBoxH = Math.floor(OUT_H * 0.2);
       const captionY = OUT_H - captionBoxH - 60;
       const grad = octx.createLinearGradient(0, captionY, 0, OUT_H);
@@ -132,11 +129,11 @@ window.addEventListener("load", async () => {
       octx.fillStyle = grad;
       octx.fillRect(0, captionY, OUT_W, captionBoxH + 80);
 
-      // text style: big bold white with black outline
+      // text
       octx.font = "bold 56px Arial";
       octx.textAlign = "center";
       octx.textBaseline = "middle";
-      const text = (typeof getCurrentCaption === "function") ? getCurrentCaption() : captionText.textContent;
+      const text = (typeof getCaption === "function") ? getCaption() : captionText.textContent;
       const maxWidth = OUT_W - 120;
       const lines = wrapText(octx, text, maxWidth);
       const lineH = 64;
@@ -174,16 +171,15 @@ window.addEventListener("load", async () => {
     return lines;
   }
 
-  // ---------- random video switcher (independent) ----------
+  // ---------- video switching (random intervals & random seek) ----------
   let videoSwitcher = null;
   function startRandomVideoSwitching() {
-    if (videoSwitcher) clearInterval(videoSwitcher);
+    if (videoSwitcher) clearTimeout(videoSwitcher);
     function scheduleNext() {
       const t = VIDEO_SWITCH_MIN + Math.floor(Math.random()*(VIDEO_SWITCH_MAX - VIDEO_SWITCH_MIN));
       videoSwitcher = setTimeout(() => {
         const v = VIDEOS[Math.floor(Math.random()*VIDEOS.length)];
-        const url = fullUrl(v);
-        topVideo.src = url;
+        topVideo.src = fullUrl(v);
         topVideo.addEventListener('loadedmetadata', function setRand() {
           try {
             const maxStart = Math.max(0.1, (topVideo.duration || 3) - 0.6);
@@ -197,9 +193,9 @@ window.addEventListener("load", async () => {
     }
     scheduleNext();
   }
-  function stopRandomVideoSwitching() { if (videoSwitcher) { clearTimeout(videoSwitcher); videoSwitcher = null; } }
+  function stopRandomVideoSwitching() { if (videoSwitcher) clearTimeout(videoSwitcher); videoSwitcher = null; }
 
-  // ---------- play sequence (facts -> chunks -> TTS) ----------
+  // ---------- play facts (chunks + tts) ----------
   async function playFactSequence(factsArray, selectedVoiceKey) {
     for (let i=0;i<factsArray.length;i++) {
       const fact = factsArray[i];
@@ -216,7 +212,7 @@ window.addEventListener("load", async () => {
     captionText.textContent = "Complete";
   }
 
-  // ---------- generate & export ----------
+  // ---------- generate & export handler ----------
   let running = false;
   generateBtn.addEventListener("click", async () => {
     if (running) return;
@@ -225,12 +221,12 @@ window.addEventListener("load", async () => {
     downloadBtn.disabled = true;
     status.textContent = "Requesting tab capture (choose This tab + Share audio)...";
 
-    // request tab capture to get TTS audio
+    // ask user to share tab (needed to capture TTS audio)
     let displayStream;
     try {
       displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
     } catch (e) {
-      status.textContent = "Permission denied or unsupported. Cancelled.";
+      status.textContent = "Permission denied or unsupported.";
       console.error(e);
       generateBtn.disabled = false;
       running = false;
@@ -240,20 +236,18 @@ window.addEventListener("load", async () => {
     const audioTracks = displayStream.getAudioTracks();
     displayStream.getVideoTracks().forEach(t => t.stop());
     if (!audioTracks || audioTracks.length === 0) {
-      status.textContent = "No tab audio detected. Ensure you share this tab and enable audio.";
+      status.textContent = "No tab audio detected. Ensure you selected 'This tab' and enabled 'Share audio'.";
     }
 
     status.textContent = "Preparing recording...";
-    startDrawLoop();
+    startDrawLoop(() => captionText.textContent);
 
-    // combine offscreen canvas stream + tab audio
+    // combine canvas stream + tab audio
     const canvasStream = offCanvas.captureStream(30);
     const combined = new MediaStream();
     canvasStream.getVideoTracks().forEach(t => combined.addTrack(t));
     audioTracks.forEach(t => combined.addTrack(t));
-
     if (combined.getAudioTracks().length === 0) {
-      // create silent audio track as fallback
       const ac = new AudioContext();
       const dst = ac.createMediaStreamDestination();
       const osc = ac.createOscillator();
@@ -263,7 +257,7 @@ window.addEventListener("load", async () => {
       combined.addTrack(dst.stream.getAudioTracks()[0]);
     }
 
-    // setup MediaRecorder
+    // recorder
     let recorder;
     let chunks = [];
     try {
@@ -273,7 +267,7 @@ window.addEventListener("load", async () => {
     }
     recorder.ondataavailable = (ev) => { if (ev.data && ev.data.size) chunks.push(ev.data); };
 
-    // prepare facts and start
+    // pick facts & start
     const chosenFacts = pickUniqueFacts(FACTS_PER_SHORT);
     recorder.start(1000);
     status.textContent = "Recording... generating narration";
@@ -284,7 +278,7 @@ window.addEventListener("load", async () => {
     const selectedKey = (voiceSelect.value === "google-uk-male") ? "uk" : "us";
     await playFactSequence(chosenFacts, selectedKey);
 
-    // finalize
+    // finalize recording
     await new Promise(r => setTimeout(r, 700));
     stopRandomVideoSwitching();
     speechSynthesis.cancel();
@@ -293,18 +287,18 @@ window.addEventListener("load", async () => {
     // wait for recorder to finalize
     await new Promise(resolve => {
       recorder.onstop = resolve;
-      // safety timeout
       setTimeout(resolve, 4000);
     });
 
     const webmBlob = new Blob(chunks, { type: 'video/webm' });
     const webmUrl = URL.createObjectURL(webmBlob);
 
-    status.textContent = "Converting to MP4 (ffmpeg.wasm) — this can take time depending on device...";
+    status.textContent = "Converting to MP4 in-browser (ffmpeg.wasm)...";
 
+    // convert webm -> mp4 with ffmpeg.wasm
     try {
       const { createFFmpeg, fetchFile } = FFmpeg;
-      const ffmpeg = createFFmpeg({ log: true });
+      const ffmpeg = createFFmpeg({ log: false });
       await ffmpeg.load();
 
       await ffmpeg.FS('writeFile', 'input.webm', await fetchFile(webmBlob));
@@ -325,7 +319,6 @@ window.addEventListener("load", async () => {
 
       status.textContent = "Conversion complete — MP4 ready. Click Download.";
 
-      // cleanup
       try { ffmpeg.FS('unlink', 'input.webm'); ffmpeg.FS('unlink', 'output.mp4'); } catch(e){}
       URL.revokeObjectURL(webmUrl);
     } catch (err) {
@@ -343,18 +336,17 @@ window.addEventListener("load", async () => {
       status.textContent = "Conversion failed — provided WebM instead.";
     }
 
-    // stop tracks & cleanup
+    // cleanup
     audioTracks.forEach(t => t.stop());
     stopDrawLoop();
-
     generateBtn.disabled = false;
     running = false;
   });
 
-  // ---------- small helper: preview via console ----------
+  // small preview helper
   window.ytg_preview = async () => {
     const chosen = pickUniqueFacts(FACTS_PER_SHORT);
-    startDrawLoop();
+    startDrawLoop(() => captionText.textContent);
     startRandomVideoSwitching();
     await playFactSequence(chosen, 'us');
     stopRandomVideoSwitching();
