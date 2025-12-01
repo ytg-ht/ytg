@@ -725,7 +725,6 @@ const facts = [
   "Did you know hedgehogs can swim?",
   "Did you know moths remember things from when they were caterpillars?",
   "Did you know the deepest part of the ocean is deeper than Mount Everest is tall?",
-  "Did you know the average cloud weighs 1.1 million pounds?"
   "Did you know the average cloud weighs more than 1 million pounds?",
   "Did you know bananas are berries but strawberries aren’t?",
   "Did you know octopuses have three hearts?",
