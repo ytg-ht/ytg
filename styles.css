@@ -6,7 +6,7 @@ html,body { height: 100%; background: #060606; font-family: Inter, Arial, sans-s
 
 #center-area { display:flex; gap:18px; align-items:flex-start; }
 
-/* short preview: vertical 9:16 (visible) */
+/* short preview: vertical 9:16 */
 #short-preview {
   width: 360px;
   height: 640px;
@@ -17,7 +17,6 @@ html,body { height: 100%; background: #060606; font-family: Inter, Arial, sans-s
   box-shadow: 0 18px 50px rgba(0,0,0,0.7);
 }
 
-/* top video fills the short's top area; video changes independently */
 #topVideo {
   position: absolute;
   top: 0;
@@ -28,7 +27,7 @@ html,body { height: 100%; background: #060606; font-family: Inter, Arial, sans-s
   background: #111;
 }
 
-/* caption: big bold centered with black outline */
+/* big bold centered caption with black outline */
 #captionBox {
   position: absolute;
   bottom: 40px;
@@ -37,7 +36,6 @@ html,body { height: 100%; background: #060606; font-family: Inter, Arial, sans-s
   padding: 0 18px;
   pointer-events: none;
 }
-
 #captionText {
   width: 100%;
   text-align: center;
@@ -53,7 +51,7 @@ html,body { height: 100%; background: #060606; font-family: Inter, Arial, sans-s
   padding: 12px;
 }
 
-/* controls on left */
+/* controls */
 #controls {
   width: 220px;
   display:flex;
@@ -61,7 +59,6 @@ html,body { height: 100%; background: #060606; font-family: Inter, Arial, sans-s
   gap:10px;
   align-items: stretch;
 }
-
 select, button {
   padding: 12px;
   border-radius: 10px;
@@ -69,7 +66,6 @@ select, button {
   font-weight: 700;
   cursor: pointer;
 }
-
 button { background: #fff; color: #000; }
 select { background: #222; color: #fff; }
 
