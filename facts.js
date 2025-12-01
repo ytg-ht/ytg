@@ -1,4 +1,4 @@
-const facts = [
+window.facts = [
 "Did you know honey never spoils?",
 "Did you know a day on Venus is longer than a year on Venus?",
 "Did you know octopuses have three hearts?",
