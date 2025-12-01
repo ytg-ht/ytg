@@ -492,7 +492,7 @@ const facts = [
   "Did you know some memories are stored forever?",
   "Did you know daydreaming is a sign of intelligence?",
   "Did you know excitement makes your heart beat faster than fear?",
-  "Did you know people become different versions of themselves around different groups?"
+  "Did you know people become different versions of themselves around different groups?",
 "Did you know honey never spoils?",
 "Did you know octopuses have three hearts?",
 "Did you know bananas are actually berries?",
