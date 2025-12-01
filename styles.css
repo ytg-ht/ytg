@@ -1,60 +1,70 @@
-body {
-  margin: 0;
-  background: #000;
-  font-family: Arial, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  color: #fff;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html,body { height: 100%; background: #070707; font-family: Inter, Arial, sans-serif; color: #fff; }
 
-#controls {
-  position: absolute;
-  left: 20px;
-  top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+/* layout */
+#app { height:100vh; display:flex; gap:20px; align-items:center; justify-content:center; padding:24px; }
 
-button, select {
-  padding: 10px 14px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-}
+/* controls */
+#left-controls { width:240px; display:flex; flex-direction:column; gap:10px; align-items:stretch; }
+select, button { padding:10px 12px; border-radius:8px; border:none; font-weight:700; cursor:pointer; }
+button { background:#fff; color:#000; }
+select { background:#222; color:#fff; }
+#status { color:#cfd6df; font-size:13px; min-height:22px; margin-top:6px; }
 
-#short-preview {
+/* preview / phone frame */
+#preview { display:flex; align-items:center; justify-content:center; }
+#short-frame {
   width: 360px;
   height: 640px;
-  background: #111;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border-radius: 14px;
-  border: 3px solid #333;
+  background:#000;
+  border-radius:14px;
+  overflow:hidden;
+  position:relative;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.6);
 }
 
+/* video covers whole frame */
 #bgVideo {
-  width: 100%;
-  height: 70%;
-  object-fit: cover;
+  position:absolute;
+  top:0; left:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
 }
 
-#captionBox {
-  width: 100%;
-  height: 30%;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* caption area sits near bottom (overlay) */
+#caption-area {
+  position:absolute;
+  left:0;
+  width:100%;
+  height:160px;             /* caption box height */
+  bottom:28px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  pointer-events:none;
+  padding:12px;
 }
 
-#captionText {
-  font-size: 26px;
-  padding: 12px;
-  text-align: center;
+/* lanes stack on top of each other, we animate translateY to make slide-up */
+.caption-lane {
+  position:absolute;
+  width:calc(100% - 40px);
+  max-width:320px;
+  text-align:center;
+  font-size:24px;
+  font-weight:800;
+  color:#fff;
+  line-height:1.1;
+  padding:10px 12px;
+  background:rgba(0,0,0,0.5);
+  border-radius:8px;
+  transform: translateY(0);
+  opacity:1;
+  transition: transform 300ms ease, opacity 300ms ease;
+  /* text outline */
+  -webkit-text-stroke: 1.5px #000;
 }
+
+/* start with laneB below visible area so it can slide up into place */
+.caption-lane.hidden { opacity:0; transform: translateY(30px); }
