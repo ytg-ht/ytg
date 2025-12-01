@@ -1,42 +1,45 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YT Short Generator</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>YT Short Generator — Exportable</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div id="app">
+    <aside id="panel">
+      <h2>Short Builder</h2>
 
-    <h1>YouTube Short Generator</h1>
+      <label for="voiceSelect">Voice</label>
+      <select id="voiceSelect"></select>
 
-    <div id="content-wrapper">
+      <button id="generateBtn">Generate Short (7 facts)</button>
+      <button id="playBtn" disabled>Play Preview</button>
+      <button id="stopBtn" disabled>Stop</button>
+      <button id="downloadBtn" disabled>Download MP4</button>
 
-        <div id="left-side">
-            <p id="fact-display">Click Generate!</p>
+      <div id="status">Ready</div>
+    </aside>
 
-            <div id="controls">
-                <button id="generateBtn">Generate Short</button>
-                <button id="playBtn" disabled>▶ Play</button>
-            </div>
+    <main id="preview">
+      <div id="shortFrame">
+        <video id="bgVideo" playsinline muted></video>
 
-            <div id="voice-select">
-                <label>Voice:</label>
-                <select id="voiceChoice">
-                    <option value="Matthew">English US - Matthew (Male)</option>
-                    <option value="Brian">English UK - Brian (Male)</option>
-                </select>
-            </div>
+        <div id="captionBar">
+          <div id="captionInner"><span id="captionText"></span></div>
         </div>
 
-        <div id="right-side">
-            <video id="video" width="300" loop muted></video>
-        </div>
+        <div id="overlayInfo">Preview — 360×640</div>
+      </div>
+    </main>
+  </div>
 
-    </div>
+  <!-- ffmpeg.wasm for in-browser mp4 conversion -->
+  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
 
-    <script src="facts.js"></script>
-    <script src="script.js"></script>
-
+  <!-- facts must load before script -->
+  <script src="facts.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
