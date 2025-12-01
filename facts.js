@@ -321,7 +321,7 @@ const facts = [
   "Did you know 3D printers can build houses?",
   "Did you know AI can write music better than humans sometimes?",
   "Did you know VR can make your brain think heights are real?",
-  "Did you know self-driving cars scan the world 10 times a second?"
+  "Did you know self-driving cars scan the world 10 times a second?",
   "Did you know humans can live without food longer than without sleep?",
   "Did you know your brain can read jumbled words as long as the first and last letters are correct?",
   "Did you know you can’t hum while holding your nose?",
