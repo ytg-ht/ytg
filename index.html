@@ -1,35 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YT Shorts Generator</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YT Short Generator</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <div id="controls">
-    <button id="generateBtn">Generate Short</button>
-    <button id="playBtn" disabled>Play</button>
+    <h1>YouTube Short Generator</h1>
 
-    <label for="voiceSelect">Voice:</label>
-    <select id="voiceSelect"></select>
+    <div id="content-wrapper">
 
-    <button id="downloadBtn" disabled>Download</button>
-  </div>
+        <div id="left-side">
+            <p id="fact-display">Click Generate!</p>
 
-  <div id="preview-area">
-    <div id="shortBox">
-      <video id="shortVideo" muted playsinline></video>
-      <div id="captionBar">
-        <p id="captionText">Press Generate to start</p>
-      </div>
+            <div id="controls">
+                <button id="generateBtn">Generate Short</button>
+                <button id="playBtn" disabled>▶ Play</button>
+            </div>
+
+            <div id="voice-select">
+                <label>Voice:</label>
+                <select id="voiceChoice">
+                    <option value="Matthew">English US - Matthew (Male)</option>
+                    <option value="Brian">English UK - Brian (Male)</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="right-side">
+            <video id="video" width="300" loop muted></video>
+        </div>
+
     </div>
-  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
-  <script src="facts.js"></script>
-  <script src="script.js"></script>
+    <script src="facts.js"></script>
+    <script src="script.js"></script>
 
 </body>
 </html>
