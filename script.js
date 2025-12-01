@@ -1,6 +1,6 @@
 console.log("script.js loaded correctly");
 
-document.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("load", () => {
 
   const factText = document.getElementById("fact-text");
   const video = document.getElementById("slimeVideo");
@@ -8,12 +8,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const nextBtn = document.getElementById("nextBtn");
 
   if (!factText || !video || !voiceSelect || !nextBtn) {
-    console.error("One or more elements missing in index.html");
+    console.error("HTML elements missing");
     return;
   }
 
   if (typeof facts === "undefined") {
-    factText.textContent = "Error: facts.js did not load 😬";
+    factText.textContent = "facts.js did not load";
     return;
   }
 
@@ -25,12 +25,29 @@ document.addEventListener("DOMContentLoaded", () => {
     "media/soap1.mp4"
   ];
 
+  function loadVoices() {
+    const voices = speechSynthesis.getVoices();
+    voiceSelect.innerHTML = "";
+
+    voices.forEach(voice => {
+      if (voice.lang.includes("en")) {
+        const option = document.createElement("option");
+        option.value = voice.name;
+        option.textContent = voice.name;
+        voiceSelect.appendChild(option);
+      }
+    });
+  }
+
+  speechSynthesis.onvoiceschanged = loadVoices;
+  loadVoices();
+
   let factIndex = 0;
 
   function playRandomVideo() {
     const url = videos[Math.floor(Math.random() * videos.length)];
     video.src = url;
-    video.play();
+    video.play().catch(err => console.warn(err));
   }
 
   function speak(text) {
@@ -50,9 +67,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
   nextBtn.addEventListener("click", showNextFact);
 
-  // Wait for voices to load to start
-  speechSynthesis.onvoiceschanged = () => {
-    showNextFact();
-  };
-
+  setTimeout(showNextFact, 300);
 });
