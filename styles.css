@@ -1,60 +1,42 @@
 body {
-  background: #111;
-  color: white;
-  font-family: Arial, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  margin: 0;
+    background: #111;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
 }
 
-#controls {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-right: 30px;
+h1 {
+    margin-top: 20px;
 }
 
-button, select {
-  font-size: 16px;
-  padding: 10px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
+#content-wrapper {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
 }
 
-#preview-area {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+#left-side {
+    width: 50%;
+    text-align: left;
+    font-size: 1.4rem;
 }
 
-#shortBox {
-  width: 360px;
-  height: 640px;
-  background: black;
-  position: relative;
-  overflow: hidden;
-  border-radius: 10px;
+#right-side {
+    width: 40%;
+    display: flex;
+    justify-content: center;
 }
 
-#shortVideo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+#video {
+    width: 100%;
+    max-width: 300px;
+    border: 3px solid white;
+    border-radius: 10px;
 }
 
-#captionBar {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  background: rgba(0,0,0,0.8);
-  padding: 10px;
-}
-
-#captionText {
-  margin: 0;
-  font-size: 22px;
-  font-weight: bold;
+#controls button {
+    font-size: 1.2rem;
+    margin-top: 10px;
+    padding: 10px;
 }
