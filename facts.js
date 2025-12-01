@@ -542,7 +542,7 @@ const facts = [
 "Did you know lightning is hotter than the sun?",
 "Did you know the first oranges weren’t orange?",
 "Did you know fire can burn in space?",
-"Did you know the largest living structure is the Great Barrier Reef?"
+"Did you know the largest living structure is the Great Barrier Reef?",
   "Did you know spiders can dream?",
   "Did you know a blue whale’s veins are so large a human could swim through them?",
   "Did you know bananas are naturally radioactive?",
@@ -883,5 +883,5 @@ const facts = [
   "Did you know pigs can use mirrors?",
   "Did you know peanuts are used to make dynamite?",
   "Did you know tiny tardigrades can survive outer space?",
-  "Did you know even penguins have knees?"
+  "Did you know even penguins have knees?",
 ];
