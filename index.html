@@ -1,33 +1,27 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shorts Generator — RenderOne</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RenderOne Shorts Generator</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="app">
-    <canvas id="canvas" width="720" height="1280"></canvas>
 
-    <div id="ui">
-      <div id="controls-top">
-        <label for="voiceSelect">Voice:</label>
-        <select id="voiceSelect"></select>
-
-        <button id="generateBtn">Generate & Record Short</button>
-        <button id="previewBtn">Preview Without Recording</button>
-      </div>
-
-      <div id="status">Ready — pick a voice and click <strong>Generate & Record Short</strong>.</div>
-
-      <div id="downloads"></div>
-
-      <p class="hint">Tip: When asked to share a screen choose <strong>This tab</strong> and check <strong>Share audio</strong> so the voice is recorded.</p>
-    </div>
+  <div id="video-container">
+    <video id="slimeVideo" autoplay muted playsinline></video>
   </div>
 
-  <!-- facts.js must be included before script.js -->
+  <div id="text-container">
+    <p id="fact-text">Loading...</p>
+  </div>
+
+  <div id="controls">
+    <label>Voice:</label>
+    <select id="voiceSelect"></select>
+    <button id="nextBtn">Next Fact</button>
+  </div>
+
   <script src="facts.js"></script>
   <script src="script.js"></script>
 </body>
