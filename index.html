@@ -1,45 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>YT Short Generator — Final</title>
-  <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Shorts Generator</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="app">
-    <aside id="panel">
-      <h2>Short Controls</h2>
 
-      <label for="voiceSelect">Voice</label>
-      <select id="voiceSelect" aria-label="Voice selector"></select>
+    <div class="app-container">
+        <h1>YouTube Shorts Generator</h1>
 
-      <button id="generateBtn">Generate Short (prepare)</button>
-      <button id="playBtn" disabled>Play</button>
-      <button id="stopBtn" disabled>Stop</button>
-      <button id="downloadBtn" disabled>Download MP4</button>
+        <input type="text" id="videoUrl" placeholder="Paste YouTube URL (embed or watch)">
+        <button id="generateBtn">Generate Short 🎬</button>
 
-      <div id="status">Ready</div>
-    </aside>
+        <div class="short-container">
+            <iframe id="videoFrame" allow="autoplay"></iframe>
 
-    <main id="preview">
-      <div id="short-frame">
-        <video id="previewVideo" muted playsinline></video>
-
-        <!-- caption bar -->
-        <div id="captionBar" aria-live="polite">
-          <div id="captionText">Press Generate to prepare a Short</div>
+            <div id="factBox">
+                <p id="factText">Click Generate to Start!</p>
+                <button id="playBtn">Play ▶</button>
+            </div>
         </div>
-      </div>
-    </main>
-  </div>
+    </div>
 
-  <!-- ffmpeg.wasm for mp4 conversion -->
-  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+    <script src="facts.js"></script>
+    <script src="script.js"></script>
 
-  <!-- facts must load before script -->
-  <script src="facts.js"></script>
-
-  <script src="script.js"></script>
 </body>
 </html>
