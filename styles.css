@@ -1,76 +1,30 @@
-:root{
-  --w:360px; --h:640px;
-  --font-base: 'Arial', sans-serif;
-}
+:root{--w:360px;--h:640px}
 *{box-sizing:border-box}
-body{
-  margin:0;
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:#0f0f10;
-  color:#fff;
-  font-family:var(--font-base);
-}
-.app{display:flex;gap:18px;align-items:flex-start;padding:18px}
-#preview{
-  width:var(--w);
-  height:var(--h);
-  border-radius:18px;
-  overflow:hidden;
-  background:#000;
-  position:relative;
-  box-shadow:0 10px 30px rgba(0,0,0,.6);
-  display:flex;
-  flex-direction:column;
-}
-#satisfyVideo{
-  width:100%;
-  height:60%;
-  object-fit:cover;
-  background:#000;
-}
-#captionBox{
-  height:40%;
-  width:100%;
-  background:#000;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  padding:12px;
-}
-#captionText{
-  color:white;
-  background:rgba(0,0,0,1);
-  padding:12px 18px;
-  border-radius:6px;
-  text-align:center;
-  font-weight:800;
-  line-height:1.05;
-  width:100%;
-  max-height:100%;
-  display:inline-block;
-  word-wrap:break-word;
-  -webkit-font-smoothing:antialiased;
-  font-size:32px; /* will auto-scale in JS */
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#0f0f10;color:#fff}
+.app{display:flex;gap:24px;padding:20px}
+.left{width:520px}
+.right{width:300px;color:#ccc;font-size:14px}
+input{display:block;margin-top:6px;padding:8px;width:100%;border-radius:8px;border:1px solid #333;background:#0b0b0c;color:#fff}
+.buttons{margin-top:12px;display:flex;gap:10px}
+button{padding:10px 14px;border-radius:8px;border:none;background:#222;color:#fff;cursor:pointer}
+button:disabled{opacity:.4;cursor:default}
+.notes{margin-top:12px;color:#bbb}
+
+/* preview layout (720x1280 popup scaled down in small windows) */
+.preview-body{display:flex;align-items:center;justify-content:center;height:100vh;background:#080808}
+#previewContainer{width:360px;height:640px;transform-origin:top left}
+@media(min-width:900px){ /* when large screen, show real scale */
+  #previewContainer{width:360px;height:640px}
 }
 
-/* Controls */
-.controls{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  width:220px;
+/* the phone preview */
+#preview{
+  width:360px;height:640px;border-radius:18px;overflow:hidden;background:#000;display:flex;flex-direction:column;box-shadow:0 12px 30px rgba(0,0,0,.7)
 }
-button{
-  background:#222;
-  color:#fff;
-  border:1px solid rgba(255,255,255,0.05);
-  padding:12px;
-  font-size:16px;
-  border-radius:10px;
-  cursor:pointer;
-}
-button:hover{filter:brightness(1.05)}
-.notes{font-size:12px;color:#bbb;margin-top:6px}
+#satisfyVideo{width:100%;height:60%;object-fit:cover;background:#000}
+#captionBox{height:40%;display:flex;align-items:center;justify-content:center;padding:12px;background:#000}
+#captionText{max-width:100%;text-align:center;font-weight:800;padding:10px 14px;border-radius:8px;background:#000;color:#fff;line-height:1.05;font-size:32px;transition:opacity .22s ease, transform .22s ease;opacity:0}
+
+/* fade class toggles opacity for fade-in/out */
+.fade.in{opacity:1;transform:translateY(0)}
+.fade.out{opacity:0;transform:translateY(6px)}
