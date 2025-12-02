@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let popupWin = null;
   let playlist = [];
-  const FACTS_PER_SHORT = 7;
+  const FACTS = 7;
 
   function log(s){ status.textContent = 'Status: ' + s; }
 
@@ -28,36 +28,43 @@ document.addEventListener('DOMContentLoaded', () => {
     return out;
   }
 
+  // B behavior: show Generating... while building
   generateBtn.addEventListener('click', () => {
-    playlist = pickFacts(FACTS_PER_SHORT);
-    log('Generated ' + playlist.length + ' facts.');
-    openPopupBtn.disabled = false;
-    recordBtn.disabled = true;
+    generateBtn.textContent = 'Generating...';
+    generateBtn.disabled = true;
+    setTimeout(()=>{ // small UX delay so user feels it changed
+      playlist = pickFacts(FACTS);
+      log('Generated ' + playlist.length + ' facts.');
+      openPopupBtn.disabled = false;
+      recordBtn.disabled = true;
+      generateBtn.textContent = 'Generate 7 Facts';
+      generateBtn.disabled = false;
+    }, 250);
   });
 
   openPopupBtn.addEventListener('click', () => {
     if (popupWin && !popupWin.closed) popupWin.close();
-    // open popup sized 720x1280 so it appears clearly in share dialog
-    const w = 720, h = 1280;
+
+    const w = 1080, h = 1920; // popup real size so it is recognized in share picker
     const left = Math.max(0, (screen.width - w)/2);
     const top = Math.max(0, (screen.height - h)/2);
     popupWin = window.open('preview.html', 'ytg_preview', `width=${w},height=${h},left=${left},top=${top}`);
     if (!popupWin) { alert('Popup blocked. Allow popups for this site.'); return; }
-    log('Popup opened. Waiting for it to say ready...');
+
+    log('Popup opened — waiting for ready...');
     const onMessage = (ev) => {
       if (ev.source !== popupWin) return;
       const d = ev.data || {};
       if (d.type === 'popup-ready') {
         window.removeEventListener('message', onMessage);
-        // send playlist and settings
         popupWin.postMessage({
-          type:'load-playlist',
+          type: 'load-playlist',
           playlist,
           settings: {
             bgMusicUrl: musicUrlInput.value || 'https://ytg-ht.github.io/ytg/sound.mp3',
-            captionWords: 10,            // normal readability: ~10 words per chunk (B)
+            captionWords: 10,         // normal readability (B)
             interFactGap: 700,
-            ttsRate: 0.85,              // slower speech
+            ttsRate: 0.85,
             voiceForce: voiceSelect.value,
             crossfadeMs: 500,
             videoList: ["media/slime1.mp4","media/slime2.mp4","media/slime3.mp4","media/slime4.mp4","media/soap1.mp4"]
@@ -79,13 +86,13 @@ document.addEventListener('DOMContentLoaded', () => {
     log('Choose the PREVIEW window in the share dialog. Recording starts after you allow.');
 
     try {
-      // ask to capture the screen/window — choose the popup window in the picker
+      // capture the popup window (user MUST select the popup window in the dialog)
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
 
-      // record
+      // MediaRecorder
       const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' :
                    MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus') ? 'video/webm;codecs=vp8,opus' : 'video/webm';
-      const recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 3000000 });
+      const recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 3500000 });
       const parts = [];
       recorder.ondataavailable = e => { if (e.data && e.data.size) parts.push(e.data); };
       recorder.onstop = () => {
@@ -101,17 +108,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       recorder.start(1000);
       log('Recording started. Telling popup to play...');
-      // tell popup to start playback
       popupWin.postMessage({ type: 'start-playback' }, '*');
 
-      // stop recorder when popup reports playback done
       const onMsg = (ev) => {
         if (ev.source !== popupWin) return;
         const d = ev.data || {};
         if (d.type === 'playback-done') {
-          setTimeout(() => {
-            if (recorder.state !== 'inactive') recorder.stop();
-          }, 600);
+          setTimeout(()=> { if (recorder.state !== 'inactive') recorder.stop(); }, 600);
           window.removeEventListener('message', onMsg);
         }
       };
