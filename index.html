@@ -2,34 +2,40 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>YT Short Generator</title>
+  <title>YTG — Render Controller</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="app">
-    <div id="previewWrap">
-      <div id="preview">
-        <video id="satisfyVideo" playsinline muted></video>
-        <div id="captionBox">
-          <div id="captionText"></div>
-        </div>
+    <div class="left">
+      <h2>YT Short — Controller</h2>
+      <p>7 facts per short · Google UK voices · Captions fade</p>
+
+      <label>Preview / Render name:
+        <input id="title" value="short" />
+      </label>
+
+      <div class="buttons">
+        <button id="generateBtn">Generate 7 Facts</button>
+        <button id="openPopupBtn" disabled>Open Preview Popup</button>
+        <button id="recordBtn" disabled>Record Popup & Download</button>
       </div>
+
+      <div id="status" class="notes">Status: idle</div>
     </div>
 
-    <div class="controls">
-      <button id="generateBtn">Generate</button>
-      <button id="playBtn">Play (voice+music)</button>
-      <button id="downloadBtn">Download (record tab)</button>
-
-      <div class="notes">
-        <p>Voice: Google UK Male / Google UK Female (fast)</p>
-        <p>Download uses "Share this tab" — choose this tab when asked so audio is recorded.</p>
-      </div>
+    <div class="right">
+      <h3>Quick notes</h3>
+      <ul>
+        <li>Popup is 720×1280 — choose that window in the share dialog.</li>
+        <li>If voices don't appear, refresh (Chrome loads voices after first run sometimes).</li>
+        <li>Use the "Record Popup & Download" button and pick the popup window in the prompt.</li>
+      </ul>
     </div>
   </div>
 
   <script src="facts.js"></script>
-  <script src="script.js"></script>
+  <script src="index.js"></script>
 </body>
 </html>
