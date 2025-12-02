@@ -1,9 +1,9 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>YTG — Controller</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -16,18 +16,22 @@
       <button id="recordBtn" disabled>Record Popup & Download</button>
     </div>
 
-    <div class="status" id="status">Status: idle</div>
-
-    <div class="voiceRow">
+    <div class="options">
       <label>Force voice:
         <select id="voiceSelect">
           <option value="auto">Auto (Google UK Male → Female)</option>
-          <option value="male">Google UK Male</option>
-          <option value="female">Google UK Female</option>
+          <option value="male">Force Google UK Male</option>
+          <option value="female">Force Google UK Female</option>
         </select>
       </label>
+      <label>Music:
+        <input id="musicUrl" value="https://ytg-ht.github.io/ytg/sound.mp3" />
+      </label>
     </div>
-    <p class="notes">When recording, **select the preview window** in the share dialog so audio is captured.</p>
+
+    <div class="status" id="status">Status: idle</div>
+
+    <p class="notes">Workflow: Generate → Open Preview Popup → Record Popup & Download. When the share dialog appears choose the <strong>preview popup window</strong> so audio is captured.</p>
   </div>
 
   <script src="facts.js"></script>
