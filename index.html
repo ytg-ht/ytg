@@ -8,10 +8,10 @@
 </head>
 <body>
   <div class="panel">
-    <h1>YT Short Generator — Controller</h1>
+    <h1>YT Short Generator</h1>
 
     <div class="controls">
-      <button id="generateBtn">Generate</button>
+      <button id="generateBtn">Generate 7 Facts</button>
       <button id="openPopupBtn" disabled>Open Preview Popup</button>
       <button id="recordBtn" disabled>Record Popup & Download</button>
     </div>
@@ -24,14 +24,24 @@
           <option value="female">Force Google UK Female</option>
         </select>
       </label>
-      <label>Music:
+
+      <label>Music URL:
         <input id="musicUrl" value="https://ytg-ht.github.io/ytg/sound.mp3" />
       </label>
     </div>
 
     <div class="status" id="status">Status: idle</div>
 
-    <p class="notes">Workflow: Generate → Open Preview Popup → Record Popup & Download. When the share dialog appears choose the <strong>preview popup window</strong> so audio is captured.</p>
+    <div class="howto">
+      <h3>How to use (important)</h3>
+      <ol>
+        <li>Click <strong>Generate 7 Facts</strong>.</li>
+        <li>Click <strong>Open Preview Popup</strong> (a 1080×1920 popup opens).</li>
+        <li>Click <strong>Record Popup & Download</strong>. When the browser asks what to share, <strong>choose the PREVIEW POPUP WINDOW</strong> (this ensures music + voice are captured).</li>
+        <li>Wait — the popup plays 7 facts, then the download will start automatically (file: <code>short.webm</code>).</li>
+      </ol>
+      <p class="tip">If popup is blocked: allow popups for this site. If voices don't appear, refresh both pages and re-open popup (Chrome sometimes loads voices late).</p>
+    </div>
   </div>
 
   <script src="facts.js"></script>
