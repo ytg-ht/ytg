@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>YT Short Render Upload</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background:#111;color:#fff; }
+    label {display:block;margin-top:10px;}
+    input, textarea, button { font-size:16px; padding:8px; margin-top:6px; }
+    #preview { margin-top: 10px; width:360px;height:640px;background:#000;border-radius:12px;overflow:hidden; }
+  </style>
+</head>
+<body>
+  <h2>Render a Short (High Quality)</h2>
+
+  <label>Fact text:
+    <textarea id="fact" rows=3>Did you know honey never spoils? Bees make it and it lasts forever!</textarea>
+  </label>
+
+  <label>Split into ~6-word chunks? <button id="splitBtn">Split</button></label>
+  <div id="chunks"></div>
+
+  <label>Voice file (required) — record browser TTS separately (instructions below) or upload:</label>
+  <input type="file" id="voiceFile" accept="audio/*">
+
+  <label>Music file (optional):</label>
+  <input type="file" id="musicFile" accept="audio/*">
+
+  <label>Video (optional):</label>
+  <input type="file" id="videoFile" accept="video/*">
+
+  <button id="renderBtn">Render & Download MP4</button>
+
+  <p id="status"></p>
+
+<script>
+function splitFactToChunks(text, size=6) {
+  const words = text.trim().split(/\s+/);
+  const chunks = [];
+  for (let i=0;i<words.length;i+=size) {
+    const chunk = words.slice(i,i+size).join(' ');
+    chunks.push(chunk);
+  }
+  return chunks;
+}
+
+document.getElementById('splitBtn').addEventListener('click', () => {
+  const fact = document.getElementById('fact').value;
+  const chunks = splitFactToChunks(fact, 6);
+  const el = document.getElementById('chunks');
+  el.innerHTML = '';
+  chunks.forEach((c,i) => {
+    const p = document.createElement('div');
+    p.textContent = `${i+1}. ${c}`;
+    el.appendChild(p);
+  });
+});
+
+document.getElementById('renderBtn').addEventListener('click', async () => {
+  const status = document.getElementById('status');
+  status.textContent = "Preparing upload...";
+  const chunks = splitFactToChunks(document.getElementById('fact').value, 6);
+  if (!chunks.length) return alert('No text');
+
+  const form = new FormData();
+  form.append('captions', JSON.stringify(chunks));
+
+  const voice = document.getElementById('voiceFile').files[0];
+  if (!voice) return alert('Please upload a voice audio file (see recording instructions).');
+  form.append('voice', voice);
+
+  const music = document.getElementById('musicFile').files[0];
+  if (music) form.append('music', music);
+
+  const video = document.getElementById('videoFile').files[0];
+  if (video) form.append('video', video);
+
+  status.textContent = "Uploading and rendering... this may take 10-30s depending on server speed.";
+  try {
+    const resp = await fetch('http://localhost:3001/render', {
+      method: 'POST',
+      body: form
+    });
+    if (!resp.ok) {
+      const j = await resp.json().catch(()=>null);
+      status.textContent = 'Render failed: '+(j && j.error ? j.error : resp.statusText);
+      return;
+    }
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'short.mp4';
+    a.click();
+    status.textContent = "Render complete — downloaded.";
+  } catch (err) {
+    console.error(err);
+    status.textContent = 'Upload or render error: '+err.message;
+  }
+});
+</script>
+</body>
+</html>
