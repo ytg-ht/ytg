@@ -1,41 +1,94 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>YTG — Render Controller</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Short Generator</title>
+    <style>
+        body {
+            background: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+        }
+
+        #previewBox {
+            width: 360px;
+            height: 640px;
+            background: #000;
+            border: 3px solid #555;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #videoSatisfy {
+            position: absolute;
+            width: 100%;
+            height: 60%;
+            top: 0;
+            object-fit: cover;
+            background: black;
+        }
+
+        #captionBox {
+            position: absolute;
+            width: 100%;
+            height: 40%;
+            bottom: 0;
+            background: black;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            font-size: 1.4rem;
+            line-height: 1.3;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        button {
+            font-size: 18px;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 6px;
+            border: none;
+        }
+    </style>
 </head>
 <body>
-  <div class="app">
-    <div class="left">
-      <h2>YT Short — Controller</h2>
-      <p>7 facts per short · Google UK voices · Captions fade</p>
 
-      <label>Preview / Render name:
-        <input id="title" value="short" />
-      </label>
-
-      <div class="buttons">
-        <button id="generateBtn">Generate 7 Facts</button>
-        <button id="openPopupBtn" disabled>Open Preview Popup</button>
-        <button id="recordBtn" disabled>Record Popup & Download</button>
-      </div>
-
-      <div id="status" class="notes">Status: idle</div>
+<div class="container">
+    
+    <div id="previewBox">
+        <video id="videoSatisfy" src="" muted playsinline></video>
+        <div id="captionBox">Ready!</div>
     </div>
 
-    <div class="right">
-      <h3>Quick notes</h3>
-      <ul>
-        <li>Popup is 720×1280 — choose that window in the share dialog.</li>
-        <li>If voices don't appear, refresh (Chrome loads voices after first run sometimes).</li>
-        <li>Use the "Record Popup & Download" button and pick the popup window in the prompt.</li>
-      </ul>
+    <div class="controls">
+        <button id="generateBtn">Generate</button>
+        <button id="playBtn">Play</button>
+        <button id="downloadBtn">Download</button>
     </div>
-  </div>
 
-  <script src="facts.js"></script>
-  <script src="index.js"></script>
+</div>
+
+<script src="facts.js"></script>
+<script src="script.js"></script>
+
 </body>
 </html>
