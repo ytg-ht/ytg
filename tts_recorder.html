@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<body style="background:#111;color:#fff;font-family:Arial;padding:20px">
+<h2>TTS Recorder (capture SpeechSynthesis)</h2>
+<textarea id="text" style="width:100%;height:120px">Paste the 7 facts text here, each fact on its own line.</textarea>
+<br/>
+<button id="start">Start Tab Capture (choose this tab when asked)</button>
+<button id="play">Play TTS</button>
+<button id="stop">Stop & Download</button>
+
+<script>
+let recorder, stream, chunks = [];
+document.getElementById('start').onclick = async () => {
+  // Must pick THIS tab in the getDisplayMedia dialog to capture the TTS audio
+  stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: false });
+  recorder = new MediaRecorder(stream);
+  recorder.ondataavailable = e => chunks.push(e.data);
+  recorder.start();
+  alert('Recording started — now click Play TTS.');
+};
+
+document.getElementById('play').onclick = () => {
+  const text = document.getElementById('text').value;
+  // choose voice (Google UK Male if present)
+  const voices = speechSynthesis.getVoices();
+  const v = voices.find(x => /Google UK.*Male/i.test(x.name)) || voices.find(x=>/Google UK/i.test(x.name)) || voices[0];
+  const ut = new SpeechSynthesisUtterance(text);
+  if (v) ut.voice = v;
+  ut.rate = 0.85;
+  speechSynthesis.speak(ut);
+};
+
+document.getElementById('stop').onclick = () => {
+  recorder.stop();
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: 'audio/webm' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'tts_capture.webm';
+    a.click();
+    stream.getTracks().forEach(t => t.stop());
+  };
+};
+</script>
+</body>
+</html>
