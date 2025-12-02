@@ -1,26 +1,22 @@
-/* layout */
-body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:#070708;color:#fff}
-.panel{padding:18px;max-width:980px;margin:18px auto}
-.controls{display:flex;gap:10px;margin:12px 0}
-button{padding:10px 14px;border-radius:8px;border:none;background:#222;color:#fff;cursor:pointer}
-button:disabled{opacity:.5;cursor:default}
-.options{margin-top:10px;display:flex;gap:10px;align-items:center}
-.options input{width:360px;padding:8px;border-radius:6px;border:1px solid #333;background:#070708;color:#fff}
-.status{color:#cfcfcf;margin-top:8px}
-.howto{margin-top:12px;color:#bdbdbd;font-size:14px}
-.howto ol{padding-left:18px}
-
-/* preview phone layout: phone container represents 360x640 area while popup is 1080x1920 physically */
-.preview-body{display:flex;align-items:center;justify-content:center;height:100vh;background:#050506}
-#previewRoot{display:flex;align-items:center;justify-content:center;width:100%}
-#previewPhone{width:360px;height:640px;border-radius:18px;overflow:hidden;background:#000;position:relative;box-shadow:0 12px 40px rgba(0,0,0,.7)}
-#previewPhone video{display:block}
-
-/* caption area (bottom 40%) */
-#captionBox{position:absolute;left:0;bottom:0;width:100%;height:40%;display:flex;align-items:center;justify-content:center;padding:14px;background:#000}
-#captionText{max-width:100%;text-align:center;font-weight:800;padding:10px 14px;border-radius:8px;background:rgba(0,0,0,1);color:#fff;line-height:1.05;word-break:break-word;display:block;max-height:100%}
-
-/* fade helpers */
-.fade{transition:opacity .22s ease, transform .22s ease}
-.fade.in{opacity:1;transform:none}
-.fade.out{opacity:0;transform:translateY(6px)}
+/* styles.css - clean minimal styling */
+:root{--bg:#070708;--muted:#9aa;--accent:#2ea3ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#fff;font-family:Inter,Arial,Helvetica,sans-serif}
+.app{max-width:1100px;margin:22px auto;padding:18px}
+header h1{margin:0;font-size:22px}
+header p.muted{color:var(--muted);margin:6px 0 18px}
+.controls{background:#0b0b0c;padding:14px;border-radius:10px;margin-bottom:16px}
+.control-row{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+label{font-size:14px;color:#ddd}
+select,input[type="number"]{padding:6px;border-radius:6px;border:1px solid #222;background:#060607;color:#fff}
+input[type="range"]{width:140px}
+button{background:#222;border:none;padding:10px 14px;color:#fff;border-radius:8px;cursor:pointer}
+button:disabled{opacity:.45;cursor:default}
+.status{margin-left:8px;color:#cfcfcf}
+.preview-small{margin-top:12px}
+.phone{width:200px;height:355px;border-radius:14px;overflow:hidden;background:#000;position:relative;box-shadow:0 12px 40px rgba(0,0,0,.6)}
+.phone video{width:100%;height:60%;object-fit:cover;display:block}
+.caption{position:absolute;left:0;bottom:0;width:100%;height:40%;display:flex;align-items:center;justify-content:center;padding:8px;text-align:center;font-weight:800;line-height:1.05;background:#000}
+.footer{color:var(--muted);margin-top:16px}
+a{color:var(--accent);text-decoration:none}
+.help{color:var(--muted);font-size:13px;margin-top:8px}
