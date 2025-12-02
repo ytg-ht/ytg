@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>YTG — Full Controls</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>YT Short Generator — Full Controls</h1>
+      <p class="muted">7 facts per short • Google UK Male default • 1080×1920 export (ffmpeg.wasm)</p>
+    </header>
+
+    <section class="controls">
+      <div class="control-row">
+        <label>Voice:
+          <select id="voiceSelect">
+            <option value="auto">Auto (Google UK Male → Female)</option>
+            <option value="male">Force Google UK Male</option>
+            <option value="female">Force Google UK Female</option>
+          </select>
+        </label>
+
+        <label>Music volume:
+          <input id="musicVol" type="range" min="0" max="100" value="15">
+        </label>
+
+        <label>Crossfade:
+          <input id="crossMs" type="number" value="500" min="0" step="50"> ms
+        </label>
+      </div>
+
+      <div class="control-row">
+        <button id="generateBtn">Generate 7 facts</button>
+        <button id="openPopupBtn" disabled>Open Preview Popup</button>
+        <button id="previewTTSBtn" disabled>Preview TTS (quick)</button>
+      </div>
+
+      <div class="control-row">
+        <button id="openRendererBtn" disabled>Open Renderer (FFmpeg)</button>
+        <span id="status" class="status">Status: idle</span>
+      </div>
+
+      <p class="help">Workflow: Generate → Open Preview Popup → (Optional) record voice via Recorder → Open Renderer → Upload voice → Export MP4</p>
+    </section>
+
+    <section class="preview-small">
+      <div id="miniPreview" class="phone">
+        <video id="miniVideo" playsinline muted></video>
+        <div id="miniCaption" class="caption">Ready — generate a short</div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <a href="tts_recorder.html" target="_blank">Open TTS Recorder</a> •
+      <a href="render.html" target="_blank">Open Renderer</a>
+    </footer>
+  </main>
+
+  <script src="facts.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
