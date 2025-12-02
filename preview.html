@@ -7,11 +7,12 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="preview-body">
-  <div id="previewWrap">
+  <div id="previewRoot">
     <div id="previewPhone">
-      <!-- Two video layers for crossfade -->
-      <video id="videoTop" playsinline></video>
-      <video id="videoBottom" playsinline style="opacity:0;position:absolute;top:0;left:0;"></video>
+      <!-- bottom video (preload/play under) -->
+      <video id="videoBottom" playsinline muted style="opacity:0;position:absolute;top:0;left:0;width:100%;height:60%;object-fit:cover;"></video>
+      <!-- top video (visible) -->
+      <video id="videoTop" playsinline muted style="position:relative;width:100%;height:60%;object-fit:cover;"></video>
 
       <div id="captionBox">
         <div id="captionText" class="fade"></div>
