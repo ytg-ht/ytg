@@ -1,20 +1,25 @@
-/* basic layout */
-body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#0b0b0c;color:#fff}
-.panel{padding:18px;max-width:760px;margin:18px}
-.controls{display:flex;gap:8px;margin:12px 0}
+/* shared layout */
+body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:#060607;color:#fff}
+.panel{padding:18px;max-width:820px;margin:18px auto}
+.controls{display:flex;gap:10px;margin:12px 0}
 button{padding:10px 14px;border-radius:8px;border:none;background:#222;color:#fff;cursor:pointer}
 button:disabled{opacity:.5;cursor:default}
+.options{margin-top:10px;display:flex;gap:10px;align-items:center}
+.options input{width:360px;padding:8px;border-radius:6px;border:1px solid #333;background:#070708;color:#fff}
 .status{color:#cfcfcf;margin-top:8px}
-.voiceRow{margin-top:8px}
 .notes{color:#9a9a9a;font-size:13px;margin-top:10px}
 
-/* preview styles (phone) */
-.preview-body{display:flex;align-items:center;justify-content:center;height:100vh;background:#050505}
-#preview{width:360px;height:640px;border-radius:18px;overflow:hidden;background:#000;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.7)}
-#satisfyVideo{width:100%;height:60%;object-fit:cover;background:#000}
-#captionBox{height:40%;display:flex;align-items:center;justify-content:center;padding:12px;background:#000}
-#captionText{color:#fff;background:#000;padding:10px 14px;border-radius:8px;font-weight:800;text-align:center;line-height:1.05;word-break:break-word;overflow:hidden;display:block;max-height:100%}
+/* preview phone layout */
+.preview-body{display:flex;align-items:center;justify-content:center;height:100vh;background:#050506}
+#previewWrap{display:flex;align-items:center;justify-content:center;width:100%}
+#previewPhone{width:360px;height:640px;border-radius:18px;overflow:hidden;background:#000;position:relative;box-shadow:0 12px 40px rgba(0,0,0,.7)}
+#previewPhone video{width:100%;height:60%;object-fit:cover;display:block;position:relative}
+
+/* caption area */
+#captionBox{position:absolute;bottom:0;left:0;width:100%;height:40%;display:flex;align-items:center;justify-content:center;padding:12px;background:#000}
+#captionText{max-width:100%;text-align:center;font-weight:800;padding:10px 14px;border-radius:8px;background:rgba(0,0,0,1);color:#fff;line-height:1.05;word-break:break-word;display:block;max-height:100%}
+
 /* fade utilities */
-.fade{transition:opacity .2s ease, transform .22s ease}
+.fade{transition:opacity .22s ease, transform .22s ease}
 .fade.in{opacity:1;transform:none}
 .fade.out{opacity:0;transform:translateY(6px)}
