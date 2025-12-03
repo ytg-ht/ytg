@@ -1,0 +1,49 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>TTS Recorder</title></head>
+<body style="background:#111;color:#fff;font-family:Arial;padding:18px">
+<h2>TTS Recorder — produce voice.webm</h2>
+<p>Paste the 7 facts (one per line). Click <strong>Start Capture</strong>, choose THIS TAB in the picker, then click <strong>Play TTS</strong>. When done click <strong>Stop & Download</strong>.</p>
+<textarea id="text" style="width:100%;height:180px" placeholder="Paste 7 facts here..."></textarea><br>
+<button id="start">Start Capture (choose THIS TAB)</button>
+<button id="play">Play TTS</button>
+<button id="stop">Stop & Download</button>
+<p id="info"></p>
+
+<script>
+let stream, recorder, chunks = [];
+document.getElementById('start').onclick = async () => {
+  try {
+    stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: false });
+    recorder = new MediaRecorder(stream);
+    chunks = [];
+    recorder.ondataavailable = e => chunks.push(e.data);
+    recorder.start();
+    document.getElementById('info').textContent = 'Recording... now click Play TTS';
+  } catch (e) { alert('Failed to start capture: ' + e.message); }
+};
+document.getElementById('play').onclick = () => {
+  const text = document.getElementById('text').value || '';
+  if (!text) return alert('Paste your 7 facts first');
+  const voices = speechSynthesis.getVoices();
+  const v = voices.find(x=>/Google UK.*Male/i.test(x.name)) || voices.find(x=>/Google UK/i.test(x.name)) || voices[0];
+  const ut = new SpeechSynthesisUtterance(text);
+  if (v) ut.voice = v;
+  ut.rate = 0.85;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(ut);
+};
+document.getElementById('stop').onclick = () => {
+  if (!recorder) return alert('Start capture first');
+  recorder.stop();
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: 'audio/webm' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'voice.webm';
+    a.click();
+    stream.getTracks().forEach(t => t.stop());
+    document.getElementById('info').textContent = 'Downloaded voice.webm';
+  };
+};
+</script>
+</body></html>
