@@ -1,0 +1,166 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Renderer (ffmpeg.wasm)</title>
+<link rel="stylesheet" href="styles.css"></head>
+<body style="padding:18px;background:#070708;color:#fff;font-family:Inter,Arial">
+<h2>Renderer — Export MP4 (client-side, no server)</h2>
+<p>Steps: 1) Generate facts in main UI & copy them here OR paste the 7 facts. 2) Create voice.webm using the Recorder. 3) Choose music (optional) and a video from your media folder. 4) Click Render. Wait a bit — ffmpeg.wasm runs in the browser.</p>
+
+<label>Facts (one per line):</label><br>
+<textarea id="facts" style="width:640px;height:160px"></textarea><br>
+<label>Voice file (required): <input id="voice" type="file" accept="audio/*"></label><br>
+<label>Music (optional): <input id="music" type="file" accept="audio/*"></label><br>
+<label>Choose video (from repo): 
+  <select id="videoSelect">
+    <option value="media/slime1.mp4">slime1.mp4</option>
+    <option value="media/slime2.mp4">slime2.mp4</option>
+    <option value="media/slime3.mp4">slime3.mp4</option>
+    <option value="media/slime4.mp4">slime4.mp4</option>
+    <option value="media/soap1.mp4">soap1.mp4</option>
+  </select>
+</label><br><br>
+
+<button id="renderBtn">Render MP4 (may take ~10-40s)</button>
+<p id="log"></p>
+
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.4/dist/ffmpeg.min.js"></script>
+<script>
+const { createFFmpeg, fetchFile } = FFmpeg;
+const ffmpeg = createFFmpeg({ log: true, corePath: 'https://unpkg.com/@ffmpeg/core@0.12.4/dist/ffmpeg-core.js' });
+
+const renderBtn = document.getElementById('renderBtn');
+const logEl = document.getElementById('log');
+
+function log(s){ logEl.textContent = s; }
+
+async function ensureFF() {
+  if (!ffmpeg.isLoaded()) {
+    log('Loading ffmpeg.wasm core (this may take a few seconds)...');
+    await ffmpeg.load();
+  }
+}
+
+function makeSRT(captions, perDurations, gap=0.7) {
+  let cur=0;
+  let s='';
+  for (let i=0;i<captions.length;i++){
+    const start=cur; const end = start + perDurations[i];
+    function ts(t){
+      const hr=Math.floor(t/3600); t-=hr*3600;
+      const mn=Math.floor(t/60); const sec=Math.floor(t-mn*60);
+      const ms = Math.floor((t - Math.floor(t)) * 1000);
+      return `${String(hr).padStart(2,'0')}:${String(mn).padStart(2,'0')}:${String(sec).padStart(2,'0')},${String(ms).padStart(3,'0')}`;
+    }
+    s += `${i+1}\n${ts(start)} --> ${ts(end)}\n${captions[i]}\n\n`;
+    cur = end + gap;
+  }
+  return s;
+}
+
+async function getAudioDuration(file) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file);
+    const a = new Audio();
+    a.src = url;
+    a.addEventListener('loadedmetadata', ()=> {
+      const d = a.duration;
+      URL.revokeObjectURL(url);
+      res(d);
+    });
+    a.onerror = (e) => rej(e);
+  });
+}
+
+renderBtn.addEventListener('click', async () => {
+  const factsText = document.getElementById('facts').value.trim().split('\n').map(s=>s.trim()).filter(Boolean);
+  if (!factsText.length) return alert('Paste the 7 facts (one per line)');
+  if (factsText.length !== 7 && !confirm('You pasted ' + factsText.length + ' lines. Continue?')) return;
+
+  const voiceFile = document.getElementById('voice').files[0];
+  if (!voiceFile) return alert('Upload voice file (voice.webm or .wav)');
+
+  const musicFile = document.getElementById('music').files[0] || null;
+  const videoSel = document.getElementById('videoSelect').value;
+
+  try {
+    await ensureFF();
+
+    log('Reading inputs...');
+    // write voice & music to FS
+    ffmpeg.FS('writeFile', 'voice.webm', await fetchFile(voiceFile));
+    if (musicFile) ffmpeg.FS('writeFile', 'music.mp3', await fetchFile(musicFile));
+
+    // fetch chosen video from server (must be hosted alongside site). Use fetchFile
+    log('Fetching selected video...');
+    const videoData = await fetchFile(videoSel);
+    ffmpeg.FS('writeFile', 'input.mp4', videoData);
+
+    log('Determining voice duration...');
+    const voiceDuration = await getAudioDuration(voiceFile);
+    log('Voice duration: ' + voiceDuration.toFixed(2) + 's');
+
+    // create per-caption durations by splitting voiceDuration evenly minus gaps
+    const gap = 0.7;
+    const n = factsText.length;
+    const totalGap = gap * (n - 1);
+    const per = Math.max(0.2, (voiceDuration - totalGap) / n);
+    const perDurations = new Array(n).fill(per);
+
+    const srt = makeSRT(factsText, perDurations, gap);
+    ffmpeg.FS('writeFile', 'captions.srt', srt);
+
+    // build ffmpeg command:
+    // scale input to topH (60% of 1080x1920 -> topH = 1152?), better compute: 1080x1920 => topH = round(1920*0.6)=1152
+    const outW = 1080, outH = 1920;
+    const topH = Math.round(outH * 0.60);
+    const bottomH = outH - topH; // 768
+
+    log('Running ffmpeg (this will take some seconds) — please wait...');
+    // Build filter: scale video to fit topH, pad/crop center, then vstack with black bar.
+    // Audio: mix voice + music (if present). Use -shortest and duration = voiceDuration + small buffer.
+    const audioMap = musicFile ? ['-i','music.mp3'] : [];
+    const inputs = ['-i','input.mp4','-i','voice.webm'].concat(audioMap);
+    // construct filter_complex string
+    // Note: ffmpeg.wasm's command is passed as array of args
+    const vf = `scale=${outW}:${topH}:force_original_aspect_ratio=decrease,pad=${outW}:${topH}:(ow-iw)/2:(oh-ih)/2,setsar=1`;
+    const createBlack = `color=size=${outW}x${bottomH}:color=black`;
+    // We'll output to out.mp4 with subtitles
+    // Build args
+    const args = [].concat(
+      ['-y'], // overwrite
+      ...inputs,
+      ['-filter_complex',
+        `[0:v]${vf}[topv];` +
+        `${createBlack}[bar];` +
+        `[topv][bar]vstack=inputs=2[vfull]` +
+        (musicFile ? `;[1:a]volume=1.0[avoice];[2:a]volume=0.15[amusic];[avoice][amusic]amix=inputs=2[aout]` : `;[1:a]aformat=channel_layouts=stereo[aout]`)
+      ],
+      ['-map','[vfull]','-map','[aout]'],
+      ['-vf',`subtitles=captions.srt`],
+      ['-r','30','-t', (voiceDuration + 1).toString(), '-preset','veryfast','out.mp4']
+    );
+
+    // Run ffmpeg
+    await ffmpeg.run(...args);
+    log('Encoding finished — reading output...');
+
+    const data = ffmpeg.FS('readFile','out.mp4');
+    const blob = new Blob([data.buffer], { type: 'video/mp4' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'short.mp4';
+    a.click();
+    log('Download should start. Saved as short.mp4');
+
+    // cleanup (optional)
+    try { ffmpeg.FS('unlink','input.mp4'); } catch(e){}
+    try { ffmpeg.FS('unlink','voice.webm'); } catch(e){}
+    try { ffmpeg.FS('unlink','captions.srt'); } catch(e){}
+    if (musicFile) try { ffmpeg.FS('unlink','music.mp3'); } catch(e){}
+    try { ffmpeg.FS('unlink','out.mp4'); } catch(e){}
+  } catch (e) {
+    console.error(e);
+    log('Render failed: ' + e.message);
+  }
+});
+</script>
+</body></html>
